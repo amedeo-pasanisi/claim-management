@@ -49,7 +49,6 @@ const ContextFileUploader = ({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
-    
     if (e.dataTransfer.files) {
       const newFiles = Array.from(e.dataTransfer.files);
       setContextFiles((prev) => [...prev, ...newFiles]);
@@ -93,7 +92,6 @@ const ContextFileUploader = ({
             onChange={handleFileChange}
           />
         </div>
-
         {contextFiles.length > 0 && (
           <div className="mt-4">
             <h3 className="font-medium mb-2">Uploaded Files ({contextFiles.length})</h3>
