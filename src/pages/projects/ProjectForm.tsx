@@ -35,29 +35,24 @@ const ProjectForm = () => {
 
   const validateForm = () => {
     let isValid = true;
-    
     if (!title.trim()) {
       setTitleError("Project title is required");
       isValid = false;
     } else {
       setTitleError("");
     }
-
     return isValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       return;
     }
-
     const projectData = {
       title,
       contextFiles,
     };
-
     if (isEditing && id) {
       const existingProject = getProjectById(id);
       if (existingProject) {
@@ -69,7 +64,6 @@ const ProjectForm = () => {
     } else {
       addProject(projectData);
     }
-
     navigate("/projects");
   };
 

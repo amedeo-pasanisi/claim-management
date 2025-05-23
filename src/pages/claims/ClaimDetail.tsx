@@ -96,15 +96,13 @@ const ClaimDetail = () => {
     if (responseText) {
       // Create a Blob with the response text
       const blob = new Blob([responseText], { type: 'text/plain' });
-      
       // Create a download link and trigger it
       const downloadLink = document.createElement('a');
       downloadLink.href = URL.createObjectURL(blob);
-      downloadLink.download = `${claim.title}_Response.pdf`; // In a real app, this would be a PDF
+      downloadLink.download = `${claim.title}_Response.txt`; // In a real app, this would be a PDF
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
-      
       toast({
         title: "Download Started",
         description: `${claim.title}_Response.pdf is being downloaded.`,
@@ -193,7 +191,7 @@ const ClaimDetail = () => {
                   className="flex items-center p-2 border rounded bg-gray-50"
                 >
                   <File className="h-4 w-4 text-amber-600 mr-2" />
-                  <span className="text-sm">{claim.claimFile.name}</span>
+                  <span className="text-sm">{claim.claimFile?.name}</span>
                 </div>
               </div>
               
@@ -368,7 +366,7 @@ const ClaimDetail = () => {
                   onClick={handleDownloadResponse}
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Download as PDF
+                  Download as .TXT
                 </Button>
               </div>
             </div>

@@ -92,45 +92,38 @@ const ClaimForm = () => {
 
   const validateForm = () => {
     let isValid = true;
-    
     if (!title.trim()) {
       setTitleError("Claim title is required");
       isValid = false;
     } else {
       setTitleError("");
     }
-
     if (!selectedContractorId) {
       setContractorError("A contractor must be selected");
       isValid = false;
     } else {
       setContractorError("");
     }
-
     if (!selectedProjectId) {
       setProjectError("A project must be selected");
       isValid = false;
     } else {
       setProjectError("");
     }
-
     if (!claimFile) {
       setClaimFileError("A claim file must be uploaded");
       isValid = false;
     } else {
       setClaimFileError("");
     }
-
     return isValid;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm() || !claimFile) {
       return;
     }
-
     const claimData = {
       title,
       contractorId: selectedContractorId,
@@ -140,7 +133,6 @@ const ClaimForm = () => {
       includedProjectContext,
       includedContractorContext,
     };
-
     if (isEditing && id) {
       const existingClaim = getClaimById(id);
       if (existingClaim) {
@@ -152,18 +144,16 @@ const ClaimForm = () => {
     } else {
       addClaim(claimData);
     }
-
     navigate("/claims");
   };
 
-  const handleClaimFileChange = (files: File[]) => {
-    if (files.length > 0) {
-      setClaimFile(files[0]);
-      setClaimFileError("");
-    } else {
-      setClaimFile(null);
-    }
-  };
+  const handleClaimFileChange: React.Dispatch<React.SetStateAction<File[]>> =
+    (setStateAction) => {
+      const files = typeof setStateAction === "function"
+        ? setStateAction([claimFile])
+        : setStateAction;
+      setClaimFile(files.length > 0 ? files[files.length-1] : null);
+    };
 
   return (
     <div className="space-y-6">
@@ -182,7 +172,6 @@ const ClaimForm = () => {
           </h1>
         </div>
       </div>
-
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="pt-6">
@@ -203,7 +192,6 @@ const ClaimForm = () => {
                 />
                 {titleError && <p className="text-sm text-red-500">{titleError}</p>}
               </div>
-
               <div className="grid gap-2">
                 <Label htmlFor="contractor">
                   Contractor <span className="text-red-500">*</span>
@@ -243,7 +231,6 @@ const ClaimForm = () => {
                   </>
                 )}
               </div>
-
               {selectedContractorId && (
                 <div className="grid gap-2">
                   <Label htmlFor="project">
@@ -283,20 +270,17 @@ const ClaimForm = () => {
             </div>
           </CardContent>
         </Card>
-
         <ContextFileUploader
           title="Main Claim File"
           description="Upload the primary claim document"
           contextFiles={claimFile ? [claimFile] : []}
-          setContextFiles={(files) => handleClaimFileChange(files)}
+          setContextFiles={handleClaimFileChange}
         />
         {claimFileError && <p className="text-sm text-red-500 mt-2 mb-4">{claimFileError}</p>}
-
         {selectedProjectId && selectedContractorId && (
           <Card className="mb-6">
             <CardContent className="pt-6">
               <h3 className="font-medium mb-4">Include Related Contexts</h3>
-
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
@@ -313,7 +297,6 @@ const ClaimForm = () => {
                     onCheckedChange={setIncludedProjectContext}
                   />
                 </div>
-
                 <div className="flex items-center justify-between">
                   <div>
                     <Label htmlFor="contractorContext" className="text-base font-normal">
@@ -333,14 +316,12 @@ const ClaimForm = () => {
             </CardContent>
           </Card>
         )}
-
         <ContextFileUploader
           title="Additional Claim Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
         />
-
         <div className="flex justify-between mt-6">
           <Button 
             type="button" 

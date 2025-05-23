@@ -116,14 +116,14 @@ const ContractorDetail = () => {
                   ) : (
                     <>
                       <FolderClosed className="mr-2 h-4 w-4 text-green-600" />
-                      Show Context Files ({contractor.contextFiles.length})
+                      Show Context Files ({contractor.contextFiles?.length})
                     </>
                   )}
                 </Button>
                 
                 {showContractorFiles && (
                   <div className="border rounded-md p-4 space-y-2">
-                    {contractor.contextFiles.length === 0 ? (
+                    {contractor.contextFiles?.length === 0 ? (
                       <p className="text-gray-500">No context files attached</p>
                     ) : (
                       contractor.contextFiles.map((file, index) => (

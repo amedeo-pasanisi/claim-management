@@ -242,11 +242,11 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const getContractorById = (id: string) => contractors.find((c) => c.id === id);
   const getClaimById = (id: string) => claims.find((c) => c.id === id);
   const getContractorsByProjectId = (projectId: string) => 
-    contractors.filter((c) => c.projectIds.includes(projectId));
+    contractors.filter((c) => c.projectIds?.includes(projectId));
   const getProjectsByContractorId = (contractorId: string) => {
     const contractor = contractors.find((c) => c.id === contractorId);
     if (!contractor) return [];
-    return projects.filter((p) => contractor.projectIds.includes(p.id));
+    return projects.filter((p) => contractor.projectIds?.includes(p.id));
   };
   const getClaimsByProjectId = (projectId: string) =>
     claims.filter((c) => c.projectId === projectId);

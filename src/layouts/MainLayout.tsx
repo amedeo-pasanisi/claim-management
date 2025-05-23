@@ -5,7 +5,7 @@ import { Home, FolderKanban, Users, FileText } from "lucide-react";
 
 const MainLayout = () => {
   const location = useLocation();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const menuItems = [
     { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
@@ -23,7 +23,7 @@ const MainLayout = () => {
         } bg-white shadow-md transition-all duration-300 flex flex-col fixed h-full z-10`}
       >
         <div className="p-4 flex items-center justify-between border-b">
-          {isSidebarOpen && <h1 className="font-semibold text-lg">Project Manager</h1>}
+          {isSidebarOpen && <h1 className="font-semibold text-lg">Sidebar</h1>}
           <button 
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-1 rounded-md hover:bg-gray-100"
