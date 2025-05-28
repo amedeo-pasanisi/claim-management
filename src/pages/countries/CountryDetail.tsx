@@ -10,10 +10,25 @@ import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 const CountryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getCountryById, deleteCountry } = useApp();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
+  const { getCountryById, deleteCountry, countries } = useApp();
+  const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const country = getCountryById(id!);
+  const countryToDeleteObj = countryToDelete ? countries.find(c => c.id === countryToDelete) : null;
+
+  const confirmDelete = () => {
+    if (countryToDelete) {
+      deleteCountry(countryToDelete);
+      setCountryToDelete(null);
+      setIsDeleteDialogOpen(false);
+      navigate("/countries")
+    }
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setCountryToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
   if (!country) {
     return (
@@ -28,11 +43,6 @@ const CountryDetail = () => {
       </div>
     );
   }
-
-  const handleDelete = () => {
-    deleteCountry(country.id);
-    navigate("/countries");
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -64,7 +74,7 @@ const CountryDetail = () => {
             variant="outline"
             size="sm"
             className="text-red-600 border-red-200 hover:bg-red-50"
-            onClick={() => setShowDeleteDialog(true)}
+            onClick={() => handleDeleteClick(country.id)}
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
@@ -131,13 +141,12 @@ const CountryDetail = () => {
           </Card>
         </div>
       </div>
-
       <ConfirmDeleteDialog
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleDelete}
-        title="Delete Country"
-        description={`Are you sure you want to delete "${country.name}"? This action cannot be undone.`}
+        isOpen={isDeleteDialogOpen}
+        setIsOpen={setIsDeleteDialogOpen}
+        entityType="Country"
+        entityName={countryToDeleteObj?.name || ""}
+        onConfirm={confirmDelete}
       />
     </div>
   );

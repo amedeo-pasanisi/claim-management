@@ -13,7 +13,7 @@ const Countries = () => {
   const navigate = useNavigate();
   const { countries, deleteCountry } = useApp();
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
-  const [countryToDelete, setCountrtToDelete] = useState<string | null>(null);
+  const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const countryToDeleteObj = countryToDelete ? countries.find(c => c.id === countryToDelete) : null;
@@ -27,7 +27,7 @@ const Countries = () => {
   ];
 
   const handleDeleteClick = (id: string) => {
-    setCountrtToDelete(id);
+    setCountryToDelete(id);
     setIsDeleteDialogOpen(true);
   };
 
@@ -41,7 +41,7 @@ const Countries = () => {
   const confirmDelete = () => {
     if (countryToDelete) {
       deleteCountry(countryToDelete);
-      setCountrtToDelete(null);
+      setCountryToDelete(null);
       setIsDeleteDialogOpen(false);
     }
   };
