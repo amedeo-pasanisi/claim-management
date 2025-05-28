@@ -19,7 +19,9 @@ import {
   Clipboard,
   Download,
   Eye,
-  ExternalLink
+  ExternalLink,
+  Scan,
+  Type
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
@@ -60,6 +62,24 @@ Yours faithfully,
 [Contractor Representative Name]
 For and on behalf of [Contractor Name]`
 
+const EXTRACTED_TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+
+Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
+
+Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
+
+At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga.`
+
+const SUMMARIZED_TEXT = `Summary: This document presents a standard Lorem ipsum text commonly used as placeholder content in the printing and typesetting industry. The text discusses various aspects of pleasure, pain, and duty, following the classical philosophical arguments about the pursuit of pleasure and avoidance of pain.
+
+Key Points:
+• Standard placeholder text used since the 1500s
+• Contains philosophical elements about pleasure and pain
+• Commonly used in design and layout demonstrations
+• Derived from classical Latin literature`
+
 const ClaimDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -76,6 +96,14 @@ const ClaimDetail = () => {
   const [isGeneratingResponse, setIsGeneratingResponse] = useState(false);
   const [responseText, setResponseText] = useState("");
   const [showResponse, setShowResponse] = useState(false);
+  
+  // Text extraction states
+  const [isExtractingText, setIsExtractingText] = useState(false);
+  const [extractedText, setExtractedText] = useState("");
+  const [showExtractedText, setShowExtractedText] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summarizedText, setSummarizedText] = useState("");
+  const [showSummary, setShowSummary] = useState(false);
 
   // References
   const responseTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -115,6 +143,41 @@ const ClaimDetail = () => {
         description: "Claim response has been generated successfully.",
       });
     }, 2000);
+  };
+
+  const handleExtractText = () => {
+    setIsExtractingText(true);
+    setShowExtractedText(false);
+    setShowSummary(false);
+    
+    // Simulate text extraction with timeout
+    setTimeout(() => {
+      setExtractedText(EXTRACTED_TEXT);
+      setIsExtractingText(false);
+      setShowExtractedText(true);
+      
+      toast({
+        title: "Text Extracted",
+        description: "Text has been extracted from the claim file successfully.",
+      });
+    }, 1500);
+  };
+
+  const handleSummarizeText = () => {
+    setIsSummarizing(true);
+    setShowSummary(false);
+    
+    // Simulate text summarization with timeout
+    setTimeout(() => {
+      setSummarizedText(SUMMARIZED_TEXT);
+      setIsSummarizing(false);
+      setShowSummary(true);
+      
+      toast({
+        title: "Text Summarized",
+        description: "Extracted text has been summarized successfully.",
+      });
+    }, 1000);
   };
 
   const handleCopyResponse = () => {
@@ -474,6 +537,94 @@ const ClaimDetail = () => {
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Generate Response
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Scan className="h-5 w-5 mr-2 text-blue-600" />
+              <CardTitle>Extract Text from Claim File</CardTitle>
+            </div>
+            {!isExtractingText && !showExtractedText && (
+              <Button 
+                onClick={handleExtractText}
+                className="flex items-center"
+              >
+                <Type className="mr-2 h-4 w-4" />
+                Extract Text
+              </Button>
+            )}
+          </div>
+          <CardDescription>
+            Extract and analyze text content from the uploaded claim file
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isExtractingText ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
+              <p className="text-gray-500">Extracting text from claim file...</p>
+            </div>
+          ) : showExtractedText ? (
+            <div className="space-y-4">
+              <div className="border rounded-md p-4 bg-gray-50">
+                <h4 className="font-medium mb-2 flex items-center">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Extracted Text
+                </h4>
+                <div className="text-sm text-gray-700 whitespace-pre-line max-h-60 overflow-y-auto">
+                  {extractedText}
+                </div>
+              </div>
+              
+              {!isSummarizing && !showSummary && (
+                <div className="flex justify-end">
+                  <Button 
+                    onClick={handleSummarizeText}
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Summarize Text
+                  </Button>
+                </div>
+              )}
+              
+              {isSummarizing && (
+                <div className="flex flex-col items-center justify-center py-6">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mb-2"></div>
+                  <p className="text-gray-500 text-sm">Generating summary...</p>
+                </div>
+              )}
+              
+              {showSummary && (
+                <div className="border rounded-md p-4 bg-blue-50">
+                  <h4 className="font-medium mb-2 flex items-center">
+                    <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                    Summary
+                  </h4>
+                  <div className="text-sm text-gray-700 whitespace-pre-line">
+                    {summarizedText}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+              <Scan className="h-16 w-16 mb-4" />
+              <p className="mb-2">No text extracted yet</p>
+              <p className="text-sm mb-4">Click the "Extract Text" button to extract content from the claim file</p>
+              <Button 
+                onClick={handleExtractText}
+                className="flex items-center"
+              >
+                <Type className="mr-2 h-4 w-4" />
+                Extract Text
               </Button>
             </div>
           )}
