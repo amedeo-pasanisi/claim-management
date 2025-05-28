@@ -113,7 +113,6 @@ const CountryForm = () => {
               <Select
                 onValueChange={(value) => setValue("selectedCountry", value)}
                 value={selectedCountry}
-                disabled={isEditing}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a country..." />
