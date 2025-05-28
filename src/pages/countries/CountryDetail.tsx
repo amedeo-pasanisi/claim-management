@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Edit2, Trash2, File } from "lucide-react";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApp } from "@/context/AppContext";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+import FlagImage from "@/components/FlagImage";
 
 const CountryDetail = () => {
   const { id } = useParams();
@@ -56,7 +56,12 @@ const CountryDetail = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="flex items-center gap-3">
-            <span className="text-4xl">{country.flag}</span>
+            <FlagImage 
+              src={country.flag}
+              alt={`${country.name} flag`}
+              className="w-12 h-8 object-cover rounded-md border"
+              fallbackText={country.code}
+            />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{country.name}</h1>
               <p className="text-gray-600">Country Code: {country.code}</p>
@@ -100,7 +105,12 @@ const CountryDetail = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Flag</label>
-                  <p className="text-3xl">{country.flag}</p>
+                  <FlagImage 
+                    src={country.flag}
+                    alt={`${country.name} flag`}
+                    className="w-16 h-10 object-cover rounded-md border mt-1"
+                    fallbackText={country.code}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created</label>

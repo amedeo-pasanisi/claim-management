@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
@@ -8,6 +7,7 @@ import ViewToggle from "@/components/ViewToggle";
 import EntityTable from "@/components/EntityTable";
 import EntityCard from "@/components/EntityCard";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+import FlagImage from "@/components/FlagImage";
 
 const Countries = () => {
   const navigate = useNavigate();
@@ -33,7 +33,14 @@ const Countries = () => {
 
   const formatCountryData = (country: any) => ({
     ...country,
-    flag: country.flag,
+    flag: (
+      <FlagImage 
+        src={country.flag}
+        alt={`${country.name} flag`}
+        className="w-8 h-5 object-cover rounded-sm"
+        fallbackText={country.code}
+      />
+    ),
     contextFiles: `${country.contextFiles?.length || 0} files`,
     createdAt: new Date(country.createdAt).toLocaleDateString(),
   });

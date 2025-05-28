@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -18,6 +17,7 @@ import { useApp } from "@/context/AppContext";
 import { Country } from "@/types";
 import { countries, CountryData } from "@/data/countries";
 import ContextFileUploader from "@/components/ContextFileUploader";
+import FlagImage from "@/components/FlagImage";
 
 type CountryFormData = {
   selectedCountry: string;
@@ -122,7 +122,12 @@ const CountryForm = () => {
                   {countries.map((country) => (
                     <SelectItem key={country.code} value={country.code}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{country.flag}</span>
+                        <FlagImage 
+                          src={country.flag}
+                          alt={`${country.name} flag`}
+                          className="w-6 h-4 object-cover rounded-sm"
+                          fallbackText={country.code}
+                        />
                         <span>{country.name}</span>
                         <span className="text-gray-500">({country.code})</span>
                       </div>
@@ -132,7 +137,12 @@ const CountryForm = () => {
               </Select>
               {selectedCountryData && (
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
-                  <span className="text-2xl">{selectedCountryData.flag}</span>
+                  <FlagImage 
+                    src={selectedCountryData.flag}
+                    alt={`${selectedCountryData.name} flag`}
+                    className="w-8 h-6 object-cover rounded-sm"
+                    fallbackText={selectedCountryData.code}
+                  />
                   <div>
                     <div className="font-medium">{selectedCountryData.name}</div>
                     <div className="text-sm text-gray-600">{selectedCountryData.code}</div>
