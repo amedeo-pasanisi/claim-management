@@ -2,13 +2,22 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { PlusCircle, FolderKanban, Users, FileText, BarChart } from "lucide-react";
+import { PlusCircle, FolderKanban, Users, FileText, BarChart, Flag } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 
 const Dashboard = () => {
-  const { projects, contractors, claims } = useApp();
+  const { projects, contractors, claims, countries } = useApp();
 
   const cards = [
+    {
+      title: "Countries",
+      description: "Manage countries for your projects",
+      icon: <Flag className="h-8 w-8 text-purple-600" />,
+      count: countries.length,
+      route: "/countries",
+      color: "border-purple-200 bg-purple-50",
+      buttonColor: "bg-purple-600 hover:bg-purple-700",
+    },
     {
       title: "Projects",
       description: "Manage your projects and their contexts",
@@ -44,7 +53,7 @@ const Dashboard = () => {
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         {cards.map((card) => (
           <Card key={card.title} className={`border ${card.color}`}>
             <CardHeader className="pb-3">

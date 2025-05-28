@@ -9,10 +9,10 @@ const MainLayout = () => {
 
   const menuItems = [
     { name: "Dashboard", path: "/", icon: <Home className="w-5 h-5" /> },
+    { name: "Countries", path: "/countries", icon: <Flag className="w-5 h-5" /> },
     { name: "Projects", path: "/projects", icon: <FolderKanban className="w-5 h-5" /> },
     { name: "Contractors", path: "/contractors", icon: <Users className="w-5 h-5" /> },
     { name: "Claims", path: "/claims", icon: <FileText className="w-5 h-5" /> },
-    { name: "Countries", path: "/countries", icon: <Flag className="w-5 h-5" /> },
   ];
 
   return (

@@ -1,7 +1,7 @@
-
 export type Project = {
   id: string;
   title: string;
+  countryId: string;
   createdAt: string;
   contextFiles: File[];
 };

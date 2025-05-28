@@ -1,8 +1,10 @@
+
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Edit2, Trash2, File } from "lucide-react";
+import { ArrowLeft, Edit2, Trash2, File, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/context/AppContext";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import FlagImage from "@/components/FlagImage";
@@ -10,11 +12,14 @@ import FlagImage from "@/components/FlagImage";
 const CountryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getCountryById, deleteCountry, countries } = useApp();
+  const { getCountryById, deleteCountry, countries, projects } = useApp();
   const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const country = getCountryById(id!);
   const countryToDeleteObj = countryToDelete ? countries.find(c => c.id === countryToDelete) : null;
+  
+  // Get projects related to this country
+  const relatedProjects = projects.filter(project => project.countryId === id);
 
   const confirmDelete = () => {
     if (countryToDelete) {
@@ -117,6 +122,46 @@ const CountryDetail = () => {
                   <p className="text-lg">{new Date(country.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <FolderKanban className="h-5 w-5 mr-2 text-blue-600" />
+                  <CardTitle>Related Projects</CardTitle>
+                </div>
+                <Badge variant="outline">{relatedProjects.length}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {relatedProjects.length === 0 ? (
+                <div className="text-center py-4">
+                  <p className="text-gray-500 mb-2">No projects in this country yet</p>
+                  <Button asChild size="sm">
+                    <Link to="/projects/new">Create Project</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {relatedProjects.map((project) => (
+                    <Link 
+                      key={project.id}
+                      to={`/projects/${project.id}`}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors"
+                    >
+                      <FolderKanban className="w-4 h-4 text-blue-600" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{project.title}</p>
+                        <p className="text-xs text-gray-500">
+                          Created {new Date(project.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

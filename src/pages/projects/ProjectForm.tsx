@@ -7,18 +7,22 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
+import FlagImage from "@/components/FlagImage";
 
 const ProjectForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { addProject, updateProject, getProjectById } = useApp();
+  const { addProject, updateProject, getProjectById, countries } = useApp();
   const isEditing = !!id;
 
   const [title, setTitle] = useState("");
+  const [countryId, setCountryId] = useState("");
   const [contextFiles, setContextFiles] = useState<File[]>([]);
   const [titleError, setTitleError] = useState("");
+  const [countryError, setCountryError] = useState("");
 
   // Load project data when editing
   useEffect(() => {
@@ -26,6 +30,7 @@ const ProjectForm = () => {
       const project = getProjectById(id);
       if (project) {
         setTitle(project.title);
+        setCountryId(project.countryId);
         setContextFiles(project.contextFiles);
       } else {
         navigate("/projects", { replace: true });
@@ -41,6 +46,14 @@ const ProjectForm = () => {
     } else {
       setTitleError("");
     }
+    
+    if (!countryId) {
+      setCountryError("Country selection is required");
+      isValid = false;
+    } else {
+      setCountryError("");
+    }
+    
     return isValid;
   };
 
@@ -51,6 +64,7 @@ const ProjectForm = () => {
     }
     const projectData = {
       title,
+      countryId,
       contextFiles,
     };
     if (isEditing && id) {
@@ -104,6 +118,39 @@ const ProjectForm = () => {
                   className={titleError ? "border-red-500" : ""}
                 />
                 {titleError && <p className="text-sm text-red-500">{titleError}</p>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="country">
+                  Country <span className="text-red-500">*</span>
+                </Label>
+                <Select 
+                  value={countryId} 
+                  onValueChange={(value) => {
+                    setCountryId(value);
+                    if (value) setCountryError("");
+                  }}
+                >
+                  <SelectTrigger className={countryError ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.id}>
+                        <div className="flex items-center gap-2">
+                          <FlagImage 
+                            src={country.flag}
+                            alt={`${country.name} flag`}
+                            className="w-4 h-3 object-cover rounded-sm"
+                            fallbackText={country.code}
+                          />
+                          <span>{country.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {countryError && <p className="text-sm text-red-500">{countryError}</p>}
               </div>
             </div>
           </CardContent>
