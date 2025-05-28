@@ -23,6 +23,42 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
+const CLAIM_RESPONSE_TEXT = `Contractor Response to Claim
+ 
+Subject: REPLY OF NOTICE
+Reference: NOC-TECNOVIA-SAIPEM-0003 | PROCUREMENT FROM CHINA, INDIA AND SOUTHEAST ASIA | GTP
+ 
+Date: [Insert Date]
+ 
+Dear Sirs,
+ 
+We acknowledge receipt of your Notice of Claim dated 14th June 2023 regarding procurement restrictions and the potential impact on schedule and costs. After a thorough review of your submission and the relevant contractual provisions, we regret to inform you that your claim is not eligible.
+ 
+Justifications for Rejection
+Foreseeable Risks and Force Majeure (Clause 21.1):
+The contract explicitly states that foreseeable events, including those arising from global challenges such as the COVID-19 pandemic and its related effects, shall not constitute Force Majeure or justify delays, non-performance, or additional costs. While your claim references trade challenges caused by the war in Ukraine, these are considered foreseeable risks that were to be accounted for at the time of contract execution.
+ 
+Risk Allocation and Procurement Obligations:
+The SUB-CONTRACTOR explicitly declared in Clause 21.1 that it had considered foreseeable risks, including potential regulatory or certification requirements, before entering into the WORK CONTRACT DOCUMENTS. The requirement for a 3.2 Type Certificate for materials from certain regions is consistent with standard procurement practices and does not constitute an unforeseen or extraordinary condition.
+ 
+Fixed Contract Amount:
+The contract specifies a fixed Base Amount and Maximum Amount, with no provisions for price adjustments due to procurement challenges or increased costs unless explicitly stated. There is no evidence in the contract that supports price adjustments or schedule revisions for the reasons cited in your claim.
+ 
+Speculative Nature of the Claim:
+Your claim is based on potential delays and cost increases, which are speculative and not tied to any demonstrated or actual impact on the project schedule or budget.
+ 
+Obligation to Perform:
+As per the contract, the SUB-CONTRACTOR is obligated to perform the WORKS in accordance with the agreed schedule and price. The challenges cited in your claim do not relieve you of this obligation, nor do they provide grounds for a schedule revision or price adjustment.
+ 
+Conclusion
+In light of the above, your claim is rejected. The contractual terms and conditions clearly allocate the risks associated with procurement challenges to the SUB-CONTRACTOR, and no provisions exist to support the requested adjustments.
+ 
+We remind you of your obligation to perform the WORKS as per the agreed terms and encourage you to explore alternative sourcing strategies to mitigate any potential delays or cost increases. Should you require further clarification, please do not hesitate to contact us.
+ 
+Yours faithfully,
+[Contractor Representative Name]
+For and on behalf of [Contractor Name]`
+
 const ClaimDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -69,9 +105,7 @@ const ClaimDetail = () => {
     
     // Simulate API call with timeout
     setTimeout(() => {
-      setResponseText(
-        `Response to claim "${claim.title}"\n\nAfter careful review of the submitted claim and all relevant documentation, we have determined the following:\n\n1. The claim has been thoroughly assessed against the project specifications and contract terms.\n\n2. Based on our analysis of the timeline and deliverables, we acknowledge receipt of your claim dated ${new Date().toLocaleDateString()}.\n\n3. We propose the following resolution strategy to address the concerns raised in your submission...\n\nPlease contact us with any questions regarding this response.`
-      );
+      setResponseText(CLAIM_RESPONSE_TEXT);
       setIsGeneratingResponse(false);
       setShowResponse(true);
       
