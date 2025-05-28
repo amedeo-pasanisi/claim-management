@@ -1,24 +1,35 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import ViewToggle from "@/components/ViewToggle";
 import EntityTable from "@/components/EntityTable";
 import EntityCard from "@/components/EntityCard";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 
 const Countries = () => {
-  const { countries } = useApp();
+  const navigate = useNavigate();
+  const { countries, deleteCountry } = useApp();
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  const [countryToDelete, setCountrtToDelete] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const countryToDeleteObj = countryToDelete ? countries.find(c => c.id === countryToDelete) : null;
 
   const columns = [
-    { key: "flag", label: "Flag" },
-    { key: "name", label: "Country" },
-    { key: "code", label: "Code" },
-    { key: "contextFiles", label: "Context Files" },
-    { key: "createdAt", label: "Created" },
+    { key: "flag", header: "Flag" },
+    { key: "name", header: "Country" },
+    { key: "code", header: "Code" },
+    { key: "contextFiles", header: "Context Files" },
+    { key: "createdAt", header: "Created" },
   ];
+
+  const handleDeleteClick = (id: string) => {
+    setCountrtToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
 
   const formatCountryData = (country: any) => ({
     ...country,
@@ -26,6 +37,14 @@ const Countries = () => {
     contextFiles: `${country.contextFiles?.length || 0} files`,
     createdAt: new Date(country.createdAt).toLocaleDateString(),
   });
+
+  const confirmDelete = () => {
+    if (countryToDelete) {
+      deleteCountry(countryToDelete);
+      setCountrtToDelete(null);
+      setIsDeleteDialogOpen(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -37,7 +56,7 @@ const Countries = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          <ViewToggle view={viewMode} setView={setViewMode} />
           <Link to="/countries/new">
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
@@ -65,9 +84,12 @@ const Countries = () => {
         <div className="bg-white rounded-lg shadow">
           {viewMode === "table" ? (
             <EntityTable
-              data={countries.map(formatCountryData)}
               columns={columns}
-              entityType="countries"
+              data={countries.map(formatCountryData)}
+              entityType="country"
+              onView={(id) => navigate(`/countries/${id}`)}
+              onEdit={(id) => navigate(`/countries/${id}/edit`)}
+              onDelete={handleDeleteClick}
             />
           ) : (
             <div className="p-6">
@@ -75,11 +97,21 @@ const Countries = () => {
                 {countries.map((country) => (
                   <EntityCard
                     key={country.id}
-                    entity={formatCountryData(country)}
-                    entityType="countries"
+                    id={country.id}
                     title={country.name}
-                    subtitle={`${country.code} • ${country.contextFiles?.length || 0} files`}
-                    icon={country.flag}
+                    type="country"
+                    metadata={[
+                      `Created: ${new Date(country.createdAt).toLocaleDateString()}`,
+                      // `Contractor: ${contractor?.name || "Unknown"}`,
+                      // `Project: ${project?.title || "Unknown"}`,
+                      `Context Files: ${country.contextFiles.length}`,
+                    ]}
+                    onView={(id) => navigate(`/countries/${id}`)}
+                    onEdit={(id) => navigate(`/countries/${id}/edit`)}
+                    onDelete={handleDeleteClick}
+                    // entity={formatCountryData(country)}
+                    // subtitle={`${country.code} • ${country.contextFiles?.length || 0} files`}
+                    // icon={country.flag}
                   />
                 ))}
               </div>
@@ -87,6 +119,13 @@ const Countries = () => {
           )}
         </div>
       )}
+      <ConfirmDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        setIsOpen={setIsDeleteDialogOpen}
+        entityType="Country"
+        entityName={countryToDeleteObj?.name || ""}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 };

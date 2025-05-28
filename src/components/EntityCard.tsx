@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 type EntityCardProps = {
   id: string;
   title: string;
-  type: "project" | "contractor" | "claim";
+  type: "project" | "contractor" | "claim" | "country";
   metadata: string[];
   onView: (id: string) => void;
   onEdit: (id: string) => void;

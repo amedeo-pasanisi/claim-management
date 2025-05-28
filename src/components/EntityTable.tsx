@@ -25,7 +25,7 @@ type Column = {
 type EntityTableProps = {
   columns: Column[];
   data: any[];
-  entityType: "project" | "contractor" | "claim";
+  entityType: "project" | "contractor" | "claim" | "country";
   onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
