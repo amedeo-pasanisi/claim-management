@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ type ContextFileUploaderProps = {
   title: string;
   description?: string;
   contextFiles: File[];
-  setContextFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  setContextFiles: (files: File[] | ((prev: File[]) => File[])) => void;
 };
 
 const ContextFileUploader = ({

@@ -1,12 +1,12 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
-import { Project, Contractor, Claim } from "@/types";
+import { Project, Contractor, Claim, Country } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 
 type AppContextType = {
   projects: Project[];
   contractors: Contractor[];
   claims: Claim[];
+  countries: Country[];
   addProject: (project: Omit<Project, "id" | "createdAt">) => void;
   updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
@@ -16,9 +16,13 @@ type AppContextType = {
   addClaim: (claim: Omit<Claim, "id" | "createdAt">) => void;
   updateClaim: (claim: Claim) => void;
   deleteClaim: (id: string) => void;
+  addCountry: (country: Omit<Country, "id" | "createdAt">) => void;
+  updateCountry: (country: Country) => void;
+  deleteCountry: (id: string) => void;
   getProjectById: (id: string) => Project | undefined;
   getContractorById: (id: string) => Contractor | undefined;
   getClaimById: (id: string) => Claim | undefined;
+  getCountryById: (id: string) => Country | undefined;
   getContractorsByProjectId: (projectId: string) => Contractor[];
   getProjectsByContractorId: (contractorId: string) => Project[];
   getClaimsByProjectId: (projectId: string) => Claim[];
@@ -32,12 +36,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
 
   // Load data from localStorage on mount
   useEffect(() => {
     const loadedProjects = localStorage.getItem("projects");
     const loadedContractors = localStorage.getItem("contractors");
     const loadedClaims = localStorage.getItem("claims");
+    const loadedCountries = localStorage.getItem("countries");
 
     if (loadedProjects) {
       try {
@@ -62,6 +68,14 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Failed to parse claims from localStorage");
       }
     }
+
+    if (loadedCountries) {
+      try {
+        setCountries(JSON.parse(loadedCountries));
+      } catch (e) {
+        console.error("Failed to parse countries from localStorage");
+      }
+    }
   }, []);
 
   // Save data to localStorage when state changes
@@ -76,6 +90,10 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem("claims", JSON.stringify(claims));
   }, [claims]);
+
+  useEffect(() => {
+    localStorage.setItem("countries", JSON.stringify(countries));
+  }, [countries]);
 
   // Project functions
   const addProject = (project: Omit<Project, "id" | "createdAt">) => {
@@ -237,10 +255,46 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     });
   };
 
+  // Country functions
+  const addCountry = (country: Omit<Country, "id" | "createdAt">) => {
+    const newCountry = {
+      ...country,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    setCountries((prev) => [...prev, newCountry]);
+    toast({
+      title: "Country created",
+      description: `${newCountry.name} has been created successfully.`,
+    });
+  };
+
+  const updateCountry = (country: Country) => {
+    setCountries((prev) =>
+      prev.map((c) => (c.id === country.id ? country : c))
+    );
+    toast({
+      title: "Country updated",
+      description: `${country.name} has been updated successfully.`,
+    });
+  };
+
+  const deleteCountry = (id: string) => {
+    const countryToDelete = countries.find((c) => c.id === id);
+    if (!countryToDelete) return;
+
+    setCountries((prev) => prev.filter((c) => c.id !== id));
+    toast({
+      title: "Country deleted",
+      description: `${countryToDelete.name} has been deleted successfully.`,
+    });
+  };
+
   // Helper functions
   const getProjectById = (id: string) => projects.find((p) => p.id === id);
   const getContractorById = (id: string) => contractors.find((c) => c.id === id);
   const getClaimById = (id: string) => claims.find((c) => c.id === id);
+  const getCountryById = (id: string) => countries.find((c) => c.id === id);
   const getContractorsByProjectId = (projectId: string) => 
     contractors.filter((c) => c.projectIds?.includes(projectId));
   const getProjectsByContractorId = (contractorId: string) => {
@@ -257,6 +311,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     projects,
     contractors,
     claims,
+    countries,
     addProject,
     updateProject,
     deleteProject,
@@ -266,9 +321,13 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     addClaim,
     updateClaim,
     deleteClaim,
+    addCountry,
+    updateCountry,
+    deleteCountry,
     getProjectById,
     getContractorById,
     getClaimById,
+    getCountryById,
     getContractorsByProjectId,
     getProjectsByContractorId,
     getClaimsByProjectId,

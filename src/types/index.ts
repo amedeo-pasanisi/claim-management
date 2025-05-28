@@ -26,9 +26,18 @@ export type Claim = {
   includedContractorContext: boolean;
 };
 
+export type Country = {
+  id: string;
+  name: string;
+  code: string;
+  flag: string;
+  createdAt: string;
+  contextFiles: File[];
+};
+
 export type Context = {
   id: string;
-  type: "project" | "contractor" | "claim";
+  type: "project" | "contractor" | "claim" | "country";
   parentId: string;
   files: File[];
 };

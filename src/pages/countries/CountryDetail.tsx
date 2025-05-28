@@ -1,0 +1,146 @@
+
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Edit2, Trash2, File } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useApp } from "@/context/AppContext";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+
+const CountryDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { getCountryById, deleteCountry } = useApp();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const country = getCountryById(id!);
+
+  if (!country) {
+    return (
+      <div className="text-center py-12">
+        <h1 className="text-2xl font-bold text-gray-900 mb-4">Country Not Found</h1>
+        <p className="text-gray-600 mb-6">The country you're looking for doesn't exist.</p>
+        <Link to="/countries">
+          <Button className="bg-blue-600 hover:bg-blue-700">
+            Back to Countries
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const handleDelete = () => {
+    deleteCountry(country.id);
+    navigate("/countries");
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate("/countries")}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">{country.flag}</span>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">{country.name}</h1>
+              <p className="text-gray-600">Country Code: {country.code}</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Link to={`/countries/${country.id}/edit`}>
+            <Button variant="outline" size="sm">
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 border-red-200 hover:bg-red-50"
+            onClick={() => setShowDeleteDialog(true)}
+          >
+            <Trash2 className="w-4 h-4 mr-2" />
+            Delete
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Country Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Country Name</label>
+                  <p className="text-lg font-semibold">{country.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Country Code</label>
+                  <p className="text-lg font-semibold">{country.code}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Flag</label>
+                  <p className="text-3xl">{country.flag}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Created</label>
+                  <p className="text-lg">{new Date(country.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Context Files</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {country.contextFiles && country.contextFiles.length > 0 ? (
+                <div className="space-y-3">
+                  {country.contextFiles.map((file, index) => (
+                    <div
+                      key={`${file.name}-${index}`}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-md"
+                    >
+                      <File className="w-4 h-4 text-blue-600" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4">No context files uploaded</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <ConfirmDeleteDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        title="Delete Country"
+        description={`Are you sure you want to delete "${country.name}"? This action cannot be undone.`}
+      />
+    </div>
+  );
+};
+
+export default CountryDetail;

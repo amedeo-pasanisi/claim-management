@@ -17,6 +17,9 @@ import ContractorDetail from "./pages/contractors/ContractorDetail";
 import Claims from "./pages/claims/Claims";
 import ClaimForm from "./pages/claims/ClaimForm";
 import ClaimDetail from "./pages/claims/ClaimDetail";
+import Countries from "./pages/countries/Countries";
+import CountryForm from "./pages/countries/CountryForm";
+import CountryDetail from "./pages/countries/CountryDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +49,11 @@ const App = () => (
               <Route path="claims/new" element={<ClaimForm />} />
               <Route path="claims/:id" element={<ClaimDetail />} />
               <Route path="claims/:id/edit" element={<ClaimForm />} />
+
+              <Route path="countries" element={<Countries />} />
+              <Route path="countries/new" element={<CountryForm />} />
+              <Route path="countries/:id" element={<CountryDetail />} />
+              <Route path="countries/:id/edit" element={<CountryForm />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

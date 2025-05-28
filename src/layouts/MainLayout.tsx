@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { Home, FolderKanban, Users, FileText } from "lucide-react";
+import { Home, FolderKanban, Users, FileText, Flag } from "lucide-react";
 
 const MainLayout = () => {
   const location = useLocation();
@@ -12,6 +12,7 @@ const MainLayout = () => {
     { name: "Projects", path: "/projects", icon: <FolderKanban className="w-5 h-5" /> },
     { name: "Contractors", path: "/contractors", icon: <Users className="w-5 h-5" /> },
     { name: "Claims", path: "/claims", icon: <FileText className="w-5 h-5" /> },
+    { name: "Countries", path: "/countries", icon: <Flag className="w-5 h-5" /> },
   ];
 
   return (
