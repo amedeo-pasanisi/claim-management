@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -18,7 +17,9 @@ import {
   FileText,
   RefreshCw,
   Clipboard,
-  Download
+  Download,
+  Eye,
+  ExternalLink
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
@@ -144,6 +145,60 @@ const ClaimDetail = () => {
     }
   };
 
+  const handleFilePreview = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    window.open(fileURL, '_blank');
+    toast({
+      title: "File Opened",
+      description: `${file.name} opened in new tab.`,
+    });
+  };
+
+  const handleFileDownload = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = fileURL;
+    downloadLink.download = file.name;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(fileURL);
+    toast({
+      title: "Download Started",
+      description: `${file.name} is being downloaded.`,
+    });
+  };
+
+  const isPreviewableFile = (file: File) => {
+    const previewableTypes = ['image/', 'text/', 'application/pdf'];
+    return previewableTypes.some(type => file.type.startsWith(type));
+  };
+
+  const renderFileActions = (file: File) => (
+    <div className="flex space-x-1">
+      {isPreviewableFile(file) && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => handleFilePreview(file)}
+          title="Preview file"
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => handleFileDownload(file)}
+        title="Download file"
+      >
+        <Download className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -221,11 +276,12 @@ const ClaimDetail = () => {
 
               <div>
                 <h3 className="font-medium mb-2">Claim File</h3>
-                <div 
-                  className="flex items-center p-2 border rounded bg-gray-50"
-                >
-                  <File className="h-4 w-4 text-amber-600 mr-2" />
-                  <span className="text-sm">{claim.claimFile?.name}</span>
+                <div className="flex items-center justify-between p-3 border rounded bg-gray-50">
+                  <div className="flex items-center">
+                    <File className="h-4 w-4 text-amber-600 mr-2" />
+                    <span className="text-sm">{claim.claimFile?.name}</span>
+                  </div>
+                  {claim.claimFile && renderFileActions(claim.claimFile)}
                 </div>
               </div>
               
@@ -257,10 +313,13 @@ const ClaimDetail = () => {
                       claim.contextFiles.map((file, index) => (
                         <div 
                           key={index} 
-                          className="flex items-center p-2 border rounded bg-gray-50"
+                          className="flex items-center justify-between p-3 border rounded bg-gray-50"
                         >
-                          <File className="h-4 w-4 text-amber-600 mr-2" />
-                          <span className="text-sm">{file.name}</span>
+                          <div className="flex items-center">
+                            <File className="h-4 w-4 text-amber-600 mr-2" />
+                            <span className="text-sm">{file.name}</span>
+                          </div>
+                          {renderFileActions(file)}
                         </div>
                       ))
                     )}
