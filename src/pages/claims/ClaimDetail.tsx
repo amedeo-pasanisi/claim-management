@@ -477,76 +477,6 @@ const ClaimDetail = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-gray-600" />
-              <CardTitle>Generate Claim Response</CardTitle>
-            </div>
-            {!isGeneratingResponse && !showResponse && (
-              <Button 
-                onClick={handleGenerateResponse}
-                className="flex items-center"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Generate Response
-              </Button>
-            )}
-          </div>
-          <CardDescription>
-            Generate an automated response based on the claim and associated context
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isGeneratingResponse ? (
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
-              <p className="text-gray-500">Generating claim response...</p>
-            </div>
-          ) : showResponse ? (
-            <div className="space-y-4">
-              <Textarea 
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                className="h-60 font-mono text-sm"
-                ref={responseTextareaRef}
-              />
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline"
-                  className="flex items-center"
-                  onClick={handleCopyResponse}
-                >
-                  <Clipboard className="mr-2 h-4 w-4" />
-                  Copy
-                </Button>
-                <Button 
-                  className="flex items-center"
-                  onClick={handleDownloadResponse}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download as .TXT
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-              <FileText className="h-16 w-16 mb-4" />
-              <p className="mb-2">No response generated yet</p>
-              <p className="text-sm mb-4">Click the "Generate Response" button to create a response to this claim</p>
-              <Button 
-                onClick={handleGenerateResponse}
-                className="flex items-center"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Generate Response
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
               <Scan className="h-5 w-5 mr-2 text-blue-600" />
               <CardTitle>Extract Text from Claim File</CardTitle>
             </div>
@@ -625,6 +555,76 @@ const ClaimDetail = () => {
               >
                 <Type className="mr-2 h-4 w-4" />
                 Extract Text
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-gray-600" />
+              <CardTitle>Generate Claim Response</CardTitle>
+            </div>
+            {!isGeneratingResponse && !showResponse && (
+              <Button 
+                onClick={handleGenerateResponse}
+                className="flex items-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Generate Response
+              </Button>
+            )}
+          </div>
+          <CardDescription>
+            Generate an automated response based on the claim and associated context
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isGeneratingResponse ? (
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
+              <p className="text-gray-500">Generating claim response...</p>
+            </div>
+          ) : showResponse ? (
+            <div className="space-y-4">
+              <Textarea 
+                value={responseText}
+                onChange={(e) => setResponseText(e.target.value)}
+                className="h-60 font-mono text-sm"
+                ref={responseTextareaRef}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  variant="outline"
+                  className="flex items-center"
+                  onClick={handleCopyResponse}
+                >
+                  <Clipboard className="mr-2 h-4 w-4" />
+                  Copy
+                </Button>
+                <Button 
+                  className="flex items-center"
+                  onClick={handleDownloadResponse}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download as .TXT
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+              <FileText className="h-16 w-16 mb-4" />
+              <p className="mb-2">No response generated yet</p>
+              <p className="text-sm mb-4">Click the "Generate Response" button to create a response to this claim</p>
+              <Button 
+                onClick={handleGenerateResponse}
+                className="flex items-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Generate Response
               </Button>
             </div>
           )}
