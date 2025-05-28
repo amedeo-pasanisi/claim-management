@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { Project, Contractor, Claim, Country } from "@/types";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 type AppContextType = {
   projects: Project[];

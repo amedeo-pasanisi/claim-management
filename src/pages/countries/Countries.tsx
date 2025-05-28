@@ -102,16 +102,11 @@ const Countries = () => {
                     type="country"
                     metadata={[
                       `Created: ${new Date(country.createdAt).toLocaleDateString()}`,
-                      // `Contractor: ${contractor?.name || "Unknown"}`,
-                      // `Project: ${project?.title || "Unknown"}`,
                       `Context Files: ${country.contextFiles.length}`,
                     ]}
                     onView={(id) => navigate(`/countries/${id}`)}
                     onEdit={(id) => navigate(`/countries/${id}/edit`)}
                     onDelete={handleDeleteClick}
-                    // entity={formatCountryData(country)}
-                    // subtitle={`${country.code} • ${country.contextFiles?.length || 0} files`}
-                    // icon={country.flag}
                   />
                 ))}
               </div>

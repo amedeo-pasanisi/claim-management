@@ -27,7 +27,8 @@ const EntityCard = ({ id, title, type, metadata, onView, onEdit, onDelete }: Ent
   const typeColor = {
     project: "bg-blue-50 text-blue-700 border-blue-200",
     contractor: "bg-green-50 text-green-700 border-green-200",
-    claim: "bg-amber-50 text-amber-700 border-amber-200"
+    claim: "bg-amber-50 text-amber-700 border-amber-200",
+    country: "bg-purple-50 text-purple-700 border-purple-200"
   };
 
   return (
