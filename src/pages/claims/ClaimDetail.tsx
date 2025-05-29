@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   ArrowLeft, 
   Edit, 
@@ -21,7 +22,8 @@ import {
   Eye,
   ExternalLink,
   Scan,
-  Type
+  Type,
+  ChevronDown
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
@@ -104,6 +106,10 @@ const ClaimDetail = () => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summarizedText, setSummarizedText] = useState("");
   const [showSummary, setShowSummary] = useState(false);
+
+  // Collapsible states
+  const [isExtractTextOpen, setIsExtractTextOpen] = useState(false);
+  const [isResponseOpen, setIsResponseOpen] = useState(false);
 
   // References
   const responseTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -548,163 +554,159 @@ const ClaimDetail = () => {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Scan className="h-5 w-5 mr-2 text-blue-600" />
-              <CardTitle>Extract Text from Claim File</CardTitle>
-            </div>
-            {!isExtractingText && !showExtractedText && (
-              <Button 
-                onClick={handleExtractText}
-                className="flex items-center"
-              >
-                <Type className="mr-2 h-4 w-4" />
-                Extract Text
-              </Button>
-            )}
-          </div>
-          <CardDescription>
-            Extract and analyze text content from the uploaded claim file
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isExtractingText ? (
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
-              <p className="text-gray-500">Extracting text from claim file...</p>
-            </div>
-          ) : showExtractedText ? (
-            <div className="space-y-4">
-              <div className="border rounded-md p-4 bg-gray-50">
-                <h4 className="font-medium mb-2 flex items-center">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Extracted Text
-                </h4>
-                <div className="text-sm text-gray-700 whitespace-pre-line max-h-60 overflow-y-auto">
-                  {extractedText}
+      <Collapsible open={isExtractTextOpen} onOpenChange={setIsExtractTextOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Scan className="h-5 w-5 mr-2 text-blue-600" />
+                  <CardTitle>Extract Text from Claim File</CardTitle>
                 </div>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isExtractTextOpen ? 'rotate-180' : ''}`} />
               </div>
-              
-              {!isSummarizing && !showSummary && (
-                <div className="flex justify-end">
+              <CardDescription>
+                Extract and analyze text content from the uploaded claim file
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              {isExtractingText ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
+                  <p className="text-gray-500">Extracting text from claim file...</p>
+                </div>
+              ) : showExtractedText ? (
+                <div className="space-y-4">
+                  <div className="border rounded-md p-4 bg-gray-50">
+                    <h4 className="font-medium mb-2 flex items-center">
+                      <FileText className="h-4 w-4 mr-2" />
+                      Extracted Text
+                    </h4>
+                    <div className="text-sm text-gray-700 whitespace-pre-line max-h-60 overflow-y-auto">
+                      {extractedText}
+                    </div>
+                  </div>
+                  
+                  {!isSummarizing && !showSummary && (
+                    <div className="flex justify-end">
+                      <Button 
+                        onClick={handleSummarizeText}
+                        variant="outline"
+                        className="flex items-center"
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Summarize Text
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {isSummarizing && (
+                    <div className="flex flex-col items-center justify-center py-6">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mb-2"></div>
+                      <p className="text-gray-500 text-sm">Generating summary...</p>
+                    </div>
+                  )}
+                  
+                  {showSummary && (
+                    <div className="border rounded-md p-4 bg-blue-50">
+                      <h4 className="font-medium mb-2 flex items-center">
+                        <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                        Summary
+                      </h4>
+                      <div className="text-sm text-gray-700 whitespace-pre-line">
+                        {summarizedText}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                  <Scan className="h-16 w-16 mb-4" />
+                  <p className="mb-2">No text extracted yet</p>
+                  <p className="text-sm mb-4">Click the "Extract Text" button to extract content from the claim file</p>
                   <Button 
-                    onClick={handleSummarizeText}
-                    variant="outline"
+                    onClick={handleExtractText}
                     className="flex items-center"
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Summarize Text
+                    <Type className="mr-2 h-4 w-4" />
+                    Extract Text
                   </Button>
                 </div>
               )}
-              
-              {isSummarizing && (
-                <div className="flex flex-col items-center justify-center py-6">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mb-2"></div>
-                  <p className="text-gray-500 text-sm">Generating summary...</p>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+      
+      <Collapsible open={isResponseOpen} onOpenChange={setIsResponseOpen}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-gray-50/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <FileText className="h-5 w-5 mr-2 text-gray-600" />
+                  <CardTitle>Generate Claim Response</CardTitle>
                 </div>
-              )}
-              
-              {showSummary && (
-                <div className="border rounded-md p-4 bg-blue-50">
-                  <h4 className="font-medium mb-2 flex items-center">
-                    <FileText className="h-4 w-4 mr-2 text-blue-600" />
-                    Summary
-                  </h4>
-                  <div className="text-sm text-gray-700 whitespace-pre-line">
-                    {summarizedText}
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${isResponseOpen ? 'rotate-180' : ''}`} />
+              </div>
+              <CardDescription>
+                Generate an automated response based on the claim and associated context
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent>
+              {isGeneratingResponse ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
+                  <p className="text-gray-500">Generating claim response...</p>
+                </div>
+              ) : showResponse ? (
+                <div className="space-y-4">
+                  <Textarea 
+                    value={responseText}
+                    onChange={(e) => setResponseText(e.target.value)}
+                    className="h-60 font-mono text-sm"
+                    ref={responseTextareaRef}
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center"
+                      onClick={handleCopyResponse}
+                    >
+                      <Clipboard className="mr-2 h-4 w-4" />
+                      Copy
+                    </Button>
+                    <Button 
+                      className="flex items-center"
+                      onClick={handleDownloadResponse}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download as .TXT
+                    </Button>
                   </div>
                 </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                  <FileText className="h-16 w-16 mb-4" />
+                  <p className="mb-2">No response generated yet</p>
+                  <p className="text-sm mb-4">Click the "Generate Response" button to create a response to this claim</p>
+                  <Button 
+                    onClick={handleGenerateResponse}
+                    className="flex items-center"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Generate Response
+                  </Button>
+                </div>
               )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-              <Scan className="h-16 w-16 mb-4" />
-              <p className="mb-2">No text extracted yet</p>
-              <p className="text-sm mb-4">Click the "Extract Text" button to extract content from the claim file</p>
-              <Button 
-                onClick={handleExtractText}
-                className="flex items-center"
-              >
-                <Type className="mr-2 h-4 w-4" />
-                Extract Text
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-gray-600" />
-              <CardTitle>Generate Claim Response</CardTitle>
-            </div>
-            {!isGeneratingResponse && !showResponse && (
-              <Button 
-                onClick={handleGenerateResponse}
-                className="flex items-center"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Generate Response
-              </Button>
-            )}
-          </div>
-          <CardDescription>
-            Generate an automated response based on the claim and associated context
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isGeneratingResponse ? (
-            <div className="flex flex-col items-center justify-center py-10">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-4"></div>
-              <p className="text-gray-500">Generating claim response...</p>
-            </div>
-          ) : showResponse ? (
-            <div className="space-y-4">
-              <Textarea 
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                className="h-60 font-mono text-sm"
-                ref={responseTextareaRef}
-              />
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline"
-                  className="flex items-center"
-                  onClick={handleCopyResponse}
-                >
-                  <Clipboard className="mr-2 h-4 w-4" />
-                  Copy
-                </Button>
-                <Button 
-                  className="flex items-center"
-                  onClick={handleDownloadResponse}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download as .TXT
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-              <FileText className="h-16 w-16 mb-4" />
-              <p className="mb-2">No response generated yet</p>
-              <p className="text-sm mb-4">Click the "Generate Response" button to create a response to this claim</p>
-              <Button 
-                onClick={handleGenerateResponse}
-                className="flex items-center"
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Generate Response
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       <ConfirmDeleteDialog
         isOpen={isDeleteDialogOpen}
