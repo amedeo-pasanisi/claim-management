@@ -64,15 +64,36 @@ Yours faithfully,
 [Contractor Representative Name]
 For and on behalf of [Contractor Name]`
 
-const EXTRACTED_TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-
-Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-
-Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.
-
-At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident, similique sunt in culpa qui officia deserunt mollitia animi, id est laborum et dolorum fuga.`
+const EXTRACTED_TEXT = `NOTICE OF CLAIM  
+ANGOLAN NORTHERN GAS COMPLEX  
+Gas Treatment Plant (GTP) Onshore Plant  
+Contract No. 1428383 CIVIL WORKS  
+ 
+Date 14th June 2023  
+NOTICE OF CLAIM | SCOPE | SITE  
+NOC-TECNOVIA-SAIPEM-0003 | PROCUREMENT FROM CHINA, INDIA AND SOUTHEAST ASIA | GTP  
+ 
+Dear Sirs,  
+ 
+Considering:  
+ 
+1. The procurement process and international purchases, regarding which, Contractor informed Tecnovia to exclude imports from China, India and SouthEast Asia (as noted in Meeting Minute M-TECNO-C-013, dated 9th June), or present a 3.2 Type Certificate for approval.  
+ 
+2. International trade is currently under stress conditions due to war in Ukraine � and actual trade trend for the most attractive sourcing markets has moved East, namely the above-mentioned countries and regions.  
+ 
+Tecnovia reserves the right to claim for potential schedule revision and price surcharge if procurement in remaining markets results in significant delay and/or overcost.  
+ 
+Yours faithfully,  
+ 
+(Signature)  
+ 
+Jos� Barros da Rocha  
+Tecnovia Representative  
+jose.barros@tecnovianangola.com  
++244 946892550  
+ 
+Tecnovia Angola  
+Sociedade de Engenharia, Lda  `
 
 const SUMMARIZED_TEXT = `Summary: This document presents a standard Lorem ipsum text commonly used as placeholder content in the printing and typesetting industry. The text discusses various aspects of pleasure, pain, and duty, following the classical philosophical arguments about the pursuit of pleasure and avoidance of pain.
 
@@ -685,7 +706,7 @@ const ClaimDetail = () => {
                       onClick={handleDownloadResponse}
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Download as .TXT
+                      Download File
                     </Button>
                   </div>
                 </div>
