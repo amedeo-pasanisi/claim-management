@@ -262,6 +262,18 @@ const ClaimDetail = () => {
     </div>
   );
 
+  // Calculate total context files count
+  const getTotalContextFilesCount = () => {
+    let count = claim.contextFiles.length;
+    if (claim.includedProjectContext && project) {
+      count += project.contextFiles.length;
+    }
+    if (claim.includedContractorContext && contractor) {
+      count += contractor.contextFiles.length;
+    }
+    return count;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -363,28 +375,91 @@ const ClaimDetail = () => {
                   ) : (
                     <>
                       <FolderClosed className="mr-2 h-4 w-4 text-amber-600" />
-                      Show Context Files ({claim.contextFiles.length})
+                      Show Context Files ({getTotalContextFilesCount()})
                     </>
                   )}
                 </Button>
                 
                 {showClaimFiles && (
-                  <div className="border rounded-md p-4 space-y-2">
-                    {claim.contextFiles.length === 0 ? (
-                      <p className="text-gray-500">No additional context files attached</p>
-                    ) : (
-                      claim.contextFiles.map((file, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-center justify-between p-3 border rounded bg-gray-50"
-                        >
-                          <div className="flex items-center">
-                            <File className="h-4 w-4 text-amber-600 mr-2" />
-                            <span className="text-sm">{file.name}</span>
-                          </div>
-                          {renderFileActions(file)}
+                  <div className="border rounded-md p-4 space-y-4">
+                    {/* Claim's own context files */}
+                    <div>
+                      <h4 className="font-medium mb-2 text-amber-600">Claim Context Files</h4>
+                      {claim.contextFiles.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No claim context files attached</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {claim.contextFiles.map((file, index) => (
+                            <div 
+                              key={index} 
+                              className="flex items-center justify-between p-3 border rounded bg-gray-50"
+                            >
+                              <div className="flex items-center">
+                                <File className="h-4 w-4 text-amber-600 mr-2" />
+                                <span className="text-sm">{file.name}</span>
+                              </div>
+                              {renderFileActions(file)}
+                            </div>
+                          ))}
                         </div>
-                      ))
+                      )}
+                    </div>
+
+                    {/* Project context files */}
+                    {claim.includedProjectContext && project && (
+                      <div>
+                        <h4 className="font-medium mb-2 text-blue-600">Project Context Files</h4>
+                        {project.contextFiles.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No project context files available</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {project.contextFiles.map((file, index) => (
+                              <div 
+                                key={`project-${index}`} 
+                                className="flex items-center justify-between p-3 border rounded bg-blue-50"
+                              >
+                                <div className="flex items-center">
+                                  <File className="h-4 w-4 text-blue-600 mr-2" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <Badge variant="outline" className="ml-2 text-xs">Project</Badge>
+                                </div>
+                                {renderFileActions(file)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Contractor context files */}
+                    {claim.includedContractorContext && contractor && (
+                      <div>
+                        <h4 className="font-medium mb-2 text-green-600">Contractor Context Files</h4>
+                        {contractor.contextFiles.length === 0 ? (
+                          <p className="text-gray-500 text-sm">No contractor context files available</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {contractor.contextFiles.map((file, index) => (
+                              <div 
+                                key={`contractor-${index}`} 
+                                className="flex items-center justify-between p-3 border rounded bg-green-50"
+                              >
+                                <div className="flex items-center">
+                                  <File className="h-4 w-4 text-green-600 mr-2" />
+                                  <span className="text-sm">{file.name}</span>
+                                  <Badge variant="outline" className="ml-2 text-xs">Contractor</Badge>
+                                </div>
+                                {renderFileActions(file)}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Show message if no context was included */}
+                    {!claim.includedProjectContext && !claim.includedContractorContext && claim.contextFiles.length === 0 && (
+                      <p className="text-gray-500 text-sm">No context files included in this claim</p>
                     )}
                   </div>
                 )}
