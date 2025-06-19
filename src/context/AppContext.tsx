@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { Project, Contractor, Claim, Country } from "@/types";
+import { Project, Contractor, Claim, Country, ApiCountry } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { countryService } from "@/services/countryService";
 
 type AppContextType = {
   projects: Project[];
   contractors: Contractor[];
   claims: Claim[];
   countries: Country[];
+  isLoadingCountries: boolean;
   addProject: (project: Omit<Project, "id" | "createdAt">) => void;
   updateProject: (project: Project) => void;
   deleteProject: (id: string) => void;
@@ -16,9 +18,9 @@ type AppContextType = {
   addClaim: (claim: Omit<Claim, "id" | "createdAt">) => void;
   updateClaim: (claim: Claim) => void;
   deleteClaim: (id: string) => void;
-  addCountry: (country: Omit<Country, "id" | "createdAt">) => void;
-  updateCountry: (country: Country) => void;
-  deleteCountry: (id: string) => void;
+  addCountry: (country: Omit<Country, "id" | "createdAt">) => Promise<void>;
+  updateCountry: (country: Country) => Promise<void>;
+  deleteCountry: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getContractorById: (id: string) => Contractor | undefined;
   getClaimById: (id: string) => Claim | undefined;
@@ -37,6 +39,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -69,13 +72,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (loadedCountries) {
-      try {
-        setCountries(JSON.parse(loadedCountries));
-      } catch (e) {
-        console.error("Failed to parse countries from localStorage");
-      }
-    }
+    // Load countries from API instead of localStorage
+    loadCountriesFromAPI();
   }, []);
 
   // Save data to localStorage when state changes
@@ -91,9 +89,40 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("claims", JSON.stringify(claims));
   }, [claims]);
 
-  useEffect(() => {
-    localStorage.setItem("countries", JSON.stringify(countries));
-  }, [countries]);
+  // Helper function to transform ApiCountry to Country
+  const transformApiCountryToCountry = (apiCountry: ApiCountry): Country => ({
+    id: apiCountry.id,
+    name: apiCountry.name,
+    code: "", // Not provided by API, will be empty
+    flag: apiCountry.flagUrl,
+    createdAt: new Date().toISOString(), // Not provided by API, use current time
+    contextFiles: [], // Not supported by API yet
+  });
+
+  // Helper function to transform Country to API format
+  const transformCountryToApiFormat = (country: Omit<Country, "id" | "createdAt">) => ({
+    name: country.name.substring(0, 20), // Ensure max 20 characters
+    flagUrl: country.flag,
+  });
+
+  // Load countries from API
+  const loadCountriesFromAPI = async () => {
+    setIsLoadingCountries(true);
+    try {
+      const apiCountries = await countryService.getAllCountries();
+      const transformedCountries = apiCountries.map(transformApiCountryToCountry);
+      setCountries(transformedCountries);
+    } catch (error) {
+      console.error("Failed to load countries from API:", error);
+      toast({
+        title: "Error loading countries",
+        description: "Failed to load countries from server. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
 
   // Project functions
   const addProject = (project: Omit<Project, "id" | "createdAt">) => {
@@ -256,45 +285,105 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Country functions
-  const addCountry = (country: Omit<Country, "id" | "createdAt">) => {
-    const newCountry = {
-      ...country,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setCountries((prev) => [...prev, newCountry]);
-    toast({
-      title: "Country created",
-      description: `${newCountry.name} has been created successfully.`,
-    });
+  const addCountry = async (country: Omit<Country, "id" | "createdAt">) => {
+    try {
+      const apiPayload = transformCountryToApiFormat(country);
+      const apiCountry = await countryService.createCountry(apiPayload);
+      const newCountry = transformApiCountryToCountry(apiCountry);
+      
+      // Store context files locally since API doesn't support them
+      if (country.contextFiles.length > 0) {
+        localStorage.setItem(`country-${apiCountry.id}-contextFiles`, JSON.stringify(country.contextFiles));
+        newCountry.contextFiles = country.contextFiles;
+      }
+      
+      setCountries((prev) => [...prev, newCountry]);
+      toast({
+        title: "Country created",
+        description: `${newCountry.name} has been created successfully.`,
+      });
+    } catch (error) {
+      console.error("Failed to create country:", error);
+      toast({
+        title: "Error creating country",
+        description: "Failed to create country. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const updateCountry = (country: Country) => {
-    setCountries((prev) =>
-      prev.map((c) => (c.id === country.id ? country : c))
-    );
-    toast({
-      title: "Country updated",
-      description: `${country.name} has been updated successfully.`,
-    });
+  const updateCountry = async (country: Country) => {
+    try {
+      const apiPayload = transformCountryToApiFormat(country);
+      const apiCountry = await countryService.updateCountry(country.id, apiPayload);
+      const updatedCountry = transformApiCountryToCountry(apiCountry);
+      
+      // Store context files locally since API doesn't support them
+      if (country.contextFiles.length > 0) {
+        localStorage.setItem(`country-${country.id}-contextFiles`, JSON.stringify(country.contextFiles));
+        updatedCountry.contextFiles = country.contextFiles;
+      } else {
+        localStorage.removeItem(`country-${country.id}-contextFiles`);
+      }
+      
+      setCountries((prev) =>
+        prev.map((c) => (c.id === country.id ? updatedCountry : c))
+      );
+      toast({
+        title: "Country updated",
+        description: `${updatedCountry.name} has been updated successfully.`,
+      });
+    } catch (error) {
+      console.error("Failed to update country:", error);
+      toast({
+        title: "Error updating country",
+        description: "Failed to update country. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const deleteCountry = (id: string) => {
+  const deleteCountry = async (id: string) => {
     const countryToDelete = countries.find((c) => c.id === id);
     if (!countryToDelete) return;
 
-    setCountries((prev) => prev.filter((c) => c.id !== id));
-    toast({
-      title: "Country deleted",
-      description: `${countryToDelete.name} has been deleted successfully.`,
-    });
+    try {
+      await countryService.deleteCountry(id);
+      localStorage.removeItem(`country-${id}-contextFiles`);
+      setCountries((prev) => prev.filter((c) => c.id !== id));
+      toast({
+        title: "Country deleted",
+        description: `${countryToDelete.name} has been deleted successfully.`,
+      });
+    } catch (error) {
+      console.error("Failed to delete country:", error);
+      toast({
+        title: "Error deleting country",
+        description: "Failed to delete country. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Helper functions
   const getProjectById = (id: string) => projects.find((p) => p.id === id);
   const getContractorById = (id: string) => contractors.find((c) => c.id === id);
   const getClaimById = (id: string) => claims.find((c) => c.id === id);
-  const getCountryById = (id: string) => countries.find((c) => c.id === id);
+  const getCountryById = (id: string) => {
+    const country = countries.find((c) => c.id === id);
+    if (country) {
+      // Load context files from localStorage
+      const contextFiles = localStorage.getItem(`country-${id}-contextFiles`);
+      if (contextFiles) {
+        try {
+          country.contextFiles = JSON.parse(contextFiles);
+        } catch (e) {
+          console.error("Failed to parse context files:", e);
+        }
+      }
+    }
+    return country;
+  };
   const getContractorsByProjectId = (projectId: string) => 
     contractors.filter((c) => c.projectIds?.includes(projectId));
   const getProjectsByContractorId = (contractorId: string) => {
@@ -312,6 +401,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     contractors,
     claims,
     countries,
+    isLoadingCountries,
     addProject,
     updateProject,
     deleteProject,
