@@ -35,23 +35,6 @@ export type Country = {
   contextFiles: File[];
 };
 
-// API types for FastAPI backend
-export type ApiCountry = {
-  id: string;
-  name: string;
-  flagUrl: string;
-};
-
-export type CountryCreateRequest = {
-  name: string;
-  flagUrl: string;
-};
-
-export type CountryUpdateRequest = {
-  name: string;
-  flagUrl: string;
-};
-
 export type Context = {
   id: string;
   type: "project" | "contractor" | "claim" | "country";

@@ -11,7 +11,7 @@ import FlagImage from "@/components/FlagImage";
 
 const Countries = () => {
   const navigate = useNavigate();
-  const { countries, deleteCountry, isLoadingCountries } = useApp();
+  const { countries, deleteCountry } = useApp();
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -45,9 +45,9 @@ const Countries = () => {
     createdAt: new Date(country.createdAt).toLocaleDateString(),
   });
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (countryToDelete) {
-      await deleteCountry(countryToDelete);
+      deleteCountry(countryToDelete);
       setCountryToDelete(null);
       setIsDeleteDialogOpen(false);
     }
@@ -73,15 +73,7 @@ const Countries = () => {
         </div>
       </div>
 
-      {isLoadingCountries ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">⏳</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading countries...</h3>
-          <p className="text-gray-600">
-            Fetching countries from the server.
-          </p>
-        </div>
-      ) : countries.length === 0 ? (
+      {countries.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">🌍</div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No countries yet</h3>

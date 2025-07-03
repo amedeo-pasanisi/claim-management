@@ -56,7 +56,7 @@ const CountryForm = () => {
     }
   }, [selectedCountry]);
 
-  const onSubmit = async (data: CountryFormData) => {
+  const onSubmit = (data: CountryFormData) => {
     const countryData = countries.find(c => c.code === data.selectedCountry);
     if (!countryData) return;
 
@@ -70,13 +70,13 @@ const CountryForm = () => {
     if (isEditing && id) {
       const existingCountry = getCountryById(id);
       if (existingCountry) {
-        await updateCountry({
+        updateCountry({
           ...existingCountry,
           ...countryPayload,
         });
       }
     } else {
-      await addCountry(countryPayload);
+      addCountry(countryPayload);
     }
 
     navigate("/countries");
