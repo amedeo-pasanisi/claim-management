@@ -1,25 +1,51 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Edit2, Trash2, File, FolderKanban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useApp } from "@/context/AppContext";
+import { countriesApi } from "@/lib/api";
+import { CountryWithProjectsContext } from "@/types/api";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import FlagImage from "@/components/FlagImage";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const CountryDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getCountryById, deleteCountry, countries, projects } = useApp();
+  const { deleteCountry, countries, projects } = useApp();
   const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const country = getCountryById(id!);
+  const [countryDetails, setCountryDetails] = useState<CountryWithProjectsContext | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const countryToDeleteObj = countryToDelete ? countries.find(c => c.id === countryToDelete) : null;
   
-  // Get projects related to this country
+  // Get projects related to this country from context
   const relatedProjects = projects.filter(project => project.countryId === id);
+
+  useEffect(() => {
+    const loadCountryDetails = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await countriesApi.getById(id);
+        setCountryDetails(data);
+      } catch (err) {
+        console.error('Failed to load country details:', err);
+        setError('Failed to load country details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCountryDetails();
+  }, [id]);
 
   const confirmDelete = () => {
     if (countryToDelete) {
@@ -35,11 +61,20 @@ const CountryDetail = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  if (!country) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner size="lg" />
+        <span className="ml-2 text-gray-600">Loading country details...</span>
+      </div>
+    );
+  }
+
+  if (error || !countryDetails) {
     return (
       <div className="text-center py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Country Not Found</h1>
-        <p className="text-gray-600 mb-6">The country you're looking for doesn't exist.</p>
+        <p className="text-gray-600 mb-6">{error || "The country you're looking for doesn't exist."}</p>
         <Link to="/countries">
           <Button className="bg-blue-600 hover:bg-blue-700">
             Back to Countries
@@ -62,19 +97,19 @@ const CountryDetail = () => {
           </Button>
           <div className="flex items-center gap-3">
             <FlagImage 
-              src={country.flag}
-              alt={`${country.name} flag`}
+              src={countryDetails.flagUrl || ''}
+              alt={`${countryDetails.name} flag`}
               className="w-12 h-8 object-cover rounded-md border"
-              fallbackText={country.code}
+              fallbackText={countryDetails.name.substring(0, 2).toUpperCase()}
             />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{country.name}</h1>
-              <p className="text-gray-600">Country Code: {country.code}</p>
+              <h1 className="text-3xl font-bold text-gray-900">{countryDetails.name}</h1>
+              <p className="text-gray-600">Country Code: {countryDetails.name.substring(0, 2).toUpperCase()}</p>
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Link to={`/countries/${country.id}/edit`}>
+          <Link to={`/countries/${countryDetails.id}/edit`}>
             <Button variant="outline" size="sm">
               <Edit2 className="w-4 h-4 mr-2" />
               Edit
@@ -84,7 +119,7 @@ const CountryDetail = () => {
             variant="outline"
             size="sm"
             className="text-red-600 border-red-200 hover:bg-red-50"
-            onClick={() => handleDeleteClick(country.id)}
+            onClick={() => handleDeleteClick(countryDetails.id)}
           >
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
@@ -102,24 +137,24 @@ const CountryDetail = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Country Name</label>
-                  <p className="text-lg font-semibold">{country.name}</p>
+                  <p className="text-lg font-semibold">{countryDetails.name}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Country Code</label>
-                  <p className="text-lg font-semibold">{country.code}</p>
+                  <p className="text-lg font-semibold">{countryDetails.name.substring(0, 2).toUpperCase()}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Flag</label>
                   <FlagImage 
-                    src={country.flag}
-                    alt={`${country.name} flag`}
+                    src={countryDetails.flagUrl || ''}
+                    alt={`${countryDetails.name} flag`}
                     className="w-16 h-10 object-cover rounded-md border mt-1"
-                    fallbackText={country.code}
+                    fallbackText={countryDetails.name.substring(0, 2).toUpperCase()}
                   />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created</label>
-                  <p className="text-lg">{new Date(country.createdAt).toLocaleDateString()}</p>
+                  <p className="text-lg">{new Date(countryDetails.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             </CardContent>
@@ -132,11 +167,11 @@ const CountryDetail = () => {
                   <FolderKanban className="h-5 w-5 mr-2 text-blue-600" />
                   <CardTitle>Related Projects</CardTitle>
                 </div>
-                <Badge variant="outline">{relatedProjects.length}</Badge>
+                <Badge variant="outline">{countryDetails.projects.length}</Badge>
               </div>
             </CardHeader>
             <CardContent>
-              {relatedProjects.length === 0 ? (
+              {countryDetails.projects.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-500 mb-2">No projects in this country yet</p>
                   <Button asChild size="sm">
@@ -145,7 +180,7 @@ const CountryDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {relatedProjects.map((project) => (
+                  {countryDetails.projects.map((project) => (
                     <Link 
                       key={project.id}
                       to={`/projects/${project.id}`}
@@ -153,7 +188,7 @@ const CountryDetail = () => {
                     >
                       <FolderKanban className="w-4 h-4 text-blue-600" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{project.title}</p>
+                        <p className="text-sm font-medium truncate">{project.name}</p>
                         <p className="text-xs text-gray-500">
                           Created {new Date(project.createdAt).toLocaleDateString()}
                         </p>
@@ -172,18 +207,20 @@ const CountryDetail = () => {
               <CardTitle>Context Files</CardTitle>
             </CardHeader>
             <CardContent>
-              {country.contextFiles && country.contextFiles.length > 0 ? (
+              {countryDetails.contextFiles && countryDetails.contextFiles.length > 0 ? (
                 <div className="space-y-3">
-                  {country.contextFiles.map((file, index) => (
+                  {countryDetails.contextFiles.map((file) => (
                     <div
-                      key={`${file.name}-${index}`}
+                      key={file.id}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded-md"
                     >
                       <File className="w-4 h-4 text-blue-600" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{file.name}</p>
+                        <p className="text-sm font-medium truncate">
+                          {file.path.split('/').pop() || file.path}
+                        </p>
                         <p className="text-xs text-gray-500">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                          Uploaded {new Date(file.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
