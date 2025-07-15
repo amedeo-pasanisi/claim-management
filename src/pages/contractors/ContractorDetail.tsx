@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,34 +7,60 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, FolderKanban, FileText } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { contractorsApi } from "@/lib/api";
+import { ContractorWithProjectsClaimsContext } from "@/types/api";
 
 const ContractorDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { 
-    getContractorById, 
-    deleteContractor, 
-    getProjectsByContractorId,
-    getClaimsByContractorId
-  } = useApp();
+  const { deleteContractor } = useApp();
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showContractorFiles, setShowContractorFiles] = useState(false);
+  const [contractor, setContractor] = useState<ContractorWithProjectsClaimsContext | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchContractor = async () => {
+      if (!id) {
+        navigate("/contractors");
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const contractorData = await contractorsApi.getById(id);
+        setContractor(contractorData);
+      } catch (err) {
+        console.error('Failed to fetch contractor:', err);
+        setError('Failed to load contractor details');
+        navigate("/contractors");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContractor();
+  }, [id, navigate]);
 
   if (!id) {
     navigate("/contractors");
     return null;
   }
-  
-  const contractor = getContractorById(id);
-  
-  if (!contractor) {
-    navigate("/contractors");
-    return null;
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
-  const projects = getProjectsByContractorId(id);
-  const claims = getClaimsByContractorId(id);
+  if (error || !contractor) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-red-600">{error || 'Contractor not found'}</p>
+      </div>
+    );
+  }
 
   const handleDelete = () => {
     deleteContractor(id);
@@ -43,8 +69,8 @@ const ContractorDetail = () => {
 
   // Generate cascade message
   let cascadeMessage = "";
-  if (claims.length > 0) {
-    cascadeMessage = `This action will also delete ${claims.length} claim(s).`;
+  if (contractor.claims.length > 0) {
+    cascadeMessage = `This action will also delete ${contractor.claims.length} claim(s).`;
   }
 
   return (
@@ -116,25 +142,28 @@ const ContractorDetail = () => {
                   ) : (
                     <>
                       <FolderClosed className="mr-2 h-4 w-4 text-green-600" />
-                      Show Context Files ({contractor.contextFiles?.length})
+                      Show Context Files ({contractor.contextFiles.length})
                     </>
                   )}
                 </Button>
                 
                 {showContractorFiles && (
                   <div className="border rounded-md p-4 space-y-2">
-                    {contractor.contextFiles?.length === 0 ? (
+                    {contractor.contextFiles.length === 0 ? (
                       <p className="text-gray-500">No context files attached</p>
                     ) : (
-                      contractor.contextFiles.map((file, index) => (
-                        <div 
-                          key={index} 
-                          className="flex items-center p-2 border rounded bg-gray-50"
-                        >
-                          <File className="h-4 w-4 text-green-600 mr-2" />
-                          <span className="text-sm">{file.name}</span>
-                        </div>
-                      ))
+                      contractor.contextFiles.map((file) => {
+                        const fileName = file.path.split('/').pop() || file.path;
+                        return (
+                          <div 
+                            key={file.id} 
+                            className="flex items-center p-2 border rounded bg-gray-50"
+                          >
+                            <File className="h-4 w-4 text-green-600 mr-2" />
+                            <span className="text-sm">{fileName}</span>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
                 )}
@@ -151,12 +180,12 @@ const ContractorDetail = () => {
                   <FolderKanban className="h-5 w-5 mr-2 text-blue-600" />
                   <CardTitle>Projects</CardTitle>
                 </div>
-                <Badge variant="outline">{projects.length}</Badge>
+                <Badge variant="outline">{contractor.projects.length}</Badge>
               </div>
               <CardDescription>Projects associated with this contractor</CardDescription>
             </CardHeader>
             <CardContent>
-              {projects.length === 0 ? (
+              {contractor.projects.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-500 mb-2">No projects associated</p>
                   <Button asChild size="sm">
@@ -165,13 +194,13 @@ const ContractorDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {projects.map((project) => (
+                  {contractor.projects.map((project) => (
                     <Link 
                       key={project.id}
                       to={`/projects/${project.id}`}
                       className="block p-2 border rounded hover:bg-gray-50"
                     >
-                      {project.title}
+                      {project.name}
                     </Link>
                   ))}
                 </div>
@@ -186,12 +215,12 @@ const ContractorDetail = () => {
                   <FileText className="h-5 w-5 mr-2 text-amber-600" />
                   <CardTitle>Claims</CardTitle>
                 </div>
-                <Badge variant="outline">{claims.length}</Badge>
+                <Badge variant="outline">{contractor.claims.length}</Badge>
               </div>
               <CardDescription>Claims associated with this contractor</CardDescription>
             </CardHeader>
             <CardContent>
-              {claims.length === 0 ? (
+              {contractor.claims.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-500 mb-2">No claims associated</p>
                   <Button asChild size="sm">
@@ -200,13 +229,13 @@ const ContractorDetail = () => {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {claims.map((claim) => (
+                  {contractor.claims.map((claim) => (
                     <Link 
                       key={claim.id}
                       to={`/claims/${claim.id}`}
                       className="block p-2 border rounded hover:bg-gray-50"
                     >
-                      {claim.title}
+                      {claim.name}
                     </Link>
                   ))}
                 </div>
