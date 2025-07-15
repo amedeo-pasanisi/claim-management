@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 import ViewToggle from "@/components/ViewToggle";
@@ -8,10 +9,11 @@ import EntityTable from "@/components/EntityTable";
 import EntityCard from "@/components/EntityCard";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import FlagImage from "@/components/FlagImage";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const Countries = () => {
   const navigate = useNavigate();
-  const { countries, deleteCountry } = useApp();
+  const { countries, deleteCountry, loading, refreshData } = useApp();
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [countryToDelete, setCountryToDelete] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -45,13 +47,33 @@ const Countries = () => {
     createdAt: new Date(country.createdAt).toLocaleDateString(),
   });
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (countryToDelete) {
-      deleteCountry(countryToDelete);
+      await deleteCountry(countryToDelete);
       setCountryToDelete(null);
       setIsDeleteDialogOpen(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Countries</h1>
+            <p className="text-gray-600 mt-2">
+              Manage your countries and their associated context files
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+          <span className="ml-2 text-gray-600">Loading countries...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -63,6 +85,14 @@ const Countries = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={refreshData}
+            className="h-10 w-10"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </Button>
           <ViewToggle view={viewMode} setView={setViewMode} />
           <Link to="/countries/new">
             <Button className="bg-blue-600 hover:bg-blue-700">

@@ -1,24 +1,27 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { Project, Contractor, Claim, Country } from "@/types";
+import { Project, Contractor, Claim, Country, mapApiCountryToFrontend, mapApiProjectToFrontend, mapApiContractorToFrontend, mapApiClaimToFrontend } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { countriesApi, projectsApi, contractorsApi, claimsApi, ApiError } from "@/lib/api";
 
 type AppContextType = {
   projects: Project[];
   contractors: Contractor[];
   claims: Claim[];
   countries: Country[];
-  addProject: (project: Omit<Project, "id" | "createdAt">) => void;
-  updateProject: (project: Project) => void;
-  deleteProject: (id: string) => void;
-  addContractor: (contractor: Omit<Contractor, "id" | "createdAt">) => void;
-  updateContractor: (contractor: Contractor) => void;
-  deleteContractor: (id: string) => void;
-  addClaim: (claim: Omit<Claim, "id" | "createdAt">) => void;
-  updateClaim: (claim: Claim) => void;
-  deleteClaim: (id: string) => void;
-  addCountry: (country: Omit<Country, "id" | "createdAt">) => void;
-  updateCountry: (country: Country) => void;
-  deleteCountry: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  addProject: (project: Omit<Project, "id" | "createdAt">) => Promise<void>;
+  updateProject: (project: Project) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  addContractor: (contractor: Omit<Contractor, "id" | "createdAt">) => Promise<void>;
+  updateContractor: (contractor: Contractor) => Promise<void>;
+  deleteContractor: (id: string) => Promise<void>;
+  addClaim: (claim: Omit<Claim, "id" | "createdAt">) => Promise<void>;
+  updateClaim: (claim: Claim) => Promise<void>;
+  deleteClaim: (id: string) => Promise<void>;
+  addCountry: (country: Omit<Country, "id" | "createdAt">) => Promise<void>;
+  updateCountry: (country: Country) => Promise<void>;
+  deleteCountry: (id: string) => Promise<void>;
   getProjectById: (id: string) => Project | undefined;
   getContractorById: (id: string) => Contractor | undefined;
   getClaimById: (id: string) => Claim | undefined;
@@ -27,6 +30,7 @@ type AppContextType = {
   getProjectsByContractorId: (contractorId: string) => Project[];
   getClaimsByProjectId: (projectId: string) => Claim[];
   getClaimsByContractorId: (contractorId: string) => Claim[];
+  refreshData: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -37,257 +41,314 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load data from localStorage on mount
+  // Handle API errors
+  const handleApiError = (error: any, operation: string) => {
+    console.error(`${operation} failed:`, error);
+    let message = `Failed to ${operation}`;
+    
+    if (error instanceof ApiError) {
+      message = `${operation} failed: ${error.message}`;
+      if (error.details?.detail) {
+        const validationErrors = error.details.detail.map((e: any) => e.msg).join(', ');
+        message += ` (${validationErrors})`;
+      }
+    } else if (error instanceof Error) {
+      message = `${operation} failed: ${error.message}`;
+    }
+    
+    setError(message);
+    toast({
+      title: "Error",
+      description: message,
+      variant: "destructive",
+    });
+  };
+
+  // Load all data from API
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const [countriesData, projectsData, contractorsData, claimsData] = await Promise.all([
+        countriesApi.getAll().catch(e => { console.warn('Failed to load countries:', e); return []; }),
+        projectsApi.getAll().catch(e => { console.warn('Failed to load projects:', e); return []; }),
+        contractorsApi.getAll().catch(e => { console.warn('Failed to load contractors:', e); return []; }),
+        claimsApi.getAll().catch(e => { console.warn('Failed to load claims:', e); return []; }),
+      ]);
+
+      setCountries(countriesData.map(mapApiCountryToFrontend));
+      setProjects(projectsData.map(mapApiProjectToFrontend));
+      setContractors(contractorsData.map(mapApiContractorToFrontend));
+      setClaims(claimsData.map(mapApiClaimToFrontend));
+    } catch (error) {
+      handleApiError(error, 'load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on mount
   useEffect(() => {
-    const loadedProjects = localStorage.getItem("projects");
-    const loadedContractors = localStorage.getItem("contractors");
-    const loadedClaims = localStorage.getItem("claims");
-    const loadedCountries = localStorage.getItem("countries");
-
-    if (loadedProjects) {
-      try {
-        setProjects(JSON.parse(loadedProjects));
-      } catch (e) {
-        console.error("Failed to parse projects from localStorage");
-      }
-    }
-    
-    if (loadedContractors) {
-      try {
-        setContractors(JSON.parse(loadedContractors));
-      } catch (e) {
-        console.error("Failed to parse contractors from localStorage");
-      }
-    }
-    
-    if (loadedClaims) {
-      try {
-        setClaims(JSON.parse(loadedClaims));
-      } catch (e) {
-        console.error("Failed to parse claims from localStorage");
-      }
-    }
-
-    if (loadedCountries) {
-      try {
-        setCountries(JSON.parse(loadedCountries));
-      } catch (e) {
-        console.error("Failed to parse countries from localStorage");
-      }
-    }
+    loadData();
   }, []);
 
-  // Save data to localStorage when state changes
-  useEffect(() => {
-    localStorage.setItem("projects", JSON.stringify(projects));
-  }, [projects]);
-
-  useEffect(() => {
-    localStorage.setItem("contractors", JSON.stringify(contractors));
-  }, [contractors]);
-
-  useEffect(() => {
-    localStorage.setItem("claims", JSON.stringify(claims));
-  }, [claims]);
-
-  useEffect(() => {
-    localStorage.setItem("countries", JSON.stringify(countries));
-  }, [countries]);
+  const refreshData = async () => {
+    await loadData();
+  };
 
   // Project functions
-  const addProject = (project: Omit<Project, "id" | "createdAt">) => {
-    const newProject = {
-      ...project,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setProjects((prev) => [...prev, newProject]);
-    toast({
-      title: "Project created",
-      description: `${newProject.title} has been created successfully.`,
-    });
+  const addProject = async (project: Omit<Project, "id" | "createdAt">) => {
+    try {
+      const apiProject = await projectsApi.create({
+        name: project.title,
+        country_id: project.countryId,
+        contextFiles: project.contextFiles,
+      });
+      
+      const newProject = mapApiProjectToFrontend(apiProject);
+      setProjects((prev) => [...prev, newProject]);
+      
+      toast({
+        title: "Project created",
+        description: `${newProject.title} has been created successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'create project');
+    }
   };
 
-  const updateProject = (project: Project) => {
-    setProjects((prev) =>
-      prev.map((p) => (p.id === project.id ? project : p))
-    );
-    toast({
-      title: "Project updated",
-      description: `${project.title} has been updated successfully.`,
-    });
+  const updateProject = async (project: Project) => {
+    try {
+      const apiProject = await projectsApi.update(project.id, {
+        name: project.title,
+        countryId: project.countryId,
+        contextFiles: project.contextFiles,
+      });
+      
+      const updatedProject = mapApiProjectToFrontend(apiProject);
+      setProjects((prev) =>
+        prev.map((p) => (p.id === project.id ? updatedProject : p))
+      );
+      
+      toast({
+        title: "Project updated",
+        description: `${updatedProject.title} has been updated successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'update project');
+    }
   };
 
-  const deleteProject = (id: string) => {
+  const deleteProject = async (id: string) => {
     const projectToDelete = projects.find((p) => p.id === id);
     if (!projectToDelete) return;
 
-    // Delete project
-    setProjects((prev) => prev.filter((p) => p.id !== id));
-
-    // Find contractors associated only with this project
-    const contractorsToDelete: string[] = [];
-    const contractorsToUpdate: Contractor[] = [];
-
-    contractors.forEach((contractor) => {
-      if (contractor.projectIds.includes(id)) {
-        if (contractor.projectIds.length === 1) {
-          // Contractor only has this project, so delete it
-          contractorsToDelete.push(contractor.id);
-        } else {
-          // Contractor has other projects, so update it
-          const updatedContractor = {
-            ...contractor,
-            projectIds: contractor.projectIds.filter((pid) => pid !== id),
-          };
-          contractorsToUpdate.push(updatedContractor);
-        }
-      }
-    });
-
-    // Update contractors that have multiple projects
-    if (contractorsToUpdate.length > 0) {
+    try {
+      await projectsApi.delete(id);
+      setProjects((prev) => prev.filter((p) => p.id !== id));
+      
+      // Remove associated relationships
       setContractors((prev) =>
-        prev.map((c) => {
-          const updatedContractor = contractorsToUpdate.find((uc) => uc.id === c.id);
-          return updatedContractor || c;
-        })
+        prev.map((contractor) => ({
+          ...contractor,
+          projectIds: contractor.projectIds.filter((pid) => pid !== id),
+        }))
       );
+      
+      setClaims((prev) => prev.filter((c) => c.projectId !== id));
+      
+      toast({
+        title: "Project deleted",
+        description: `${projectToDelete.title} has been deleted successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'delete project');
     }
-
-    // Delete contractors that only had this project
-    if (contractorsToDelete.length > 0) {
-      setContractors((prev) =>
-        prev.filter((c) => !contractorsToDelete.includes(c.id))
-      );
-    }
-
-    // Delete claims associated with this project
-    const claimsToDelete = claims.filter((c) => c.projectId === id);
-    if (claimsToDelete.length > 0) {
-      setClaims((prev) =>
-        prev.filter((c) => !claimsToDelete.map((cd) => cd.id).includes(c.id))
-      );
-    }
-
-    toast({
-      title: "Project deleted",
-      description: `${projectToDelete.title} and all associated content has been deleted.`,
-    });
   };
 
   // Contractor functions
-  const addContractor = (contractor: Omit<Contractor, "id" | "createdAt">) => {
-    const newContractor = {
-      ...contractor,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setContractors((prev) => [...prev, newContractor]);
-    toast({
-      title: "Contractor created",
-      description: `${newContractor.name} has been created successfully.`,
-    });
+  const addContractor = async (contractor: Omit<Contractor, "id" | "createdAt">) => {
+    try {
+      const apiContractor = await contractorsApi.create({
+        name: contractor.name,
+        projectsIds: contractor.projectIds,
+        contextFiles: contractor.contextFiles,
+      });
+      
+      const newContractor = mapApiContractorToFrontend(apiContractor);
+      setContractors((prev) => [...prev, newContractor]);
+      
+      toast({
+        title: "Contractor created",
+        description: `${newContractor.name} has been created successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'create contractor');
+    }
   };
 
-  const updateContractor = (contractor: Contractor) => {
-    setContractors((prev) =>
-      prev.map((c) => (c.id === contractor.id ? contractor : c))
-    );
-    toast({
-      title: "Contractor updated",
-      description: `${contractor.name} has been updated successfully.`,
-    });
+  const updateContractor = async (contractor: Contractor) => {
+    try {
+      const apiContractor = await contractorsApi.update(contractor.id, {
+        name: contractor.name,
+        projectsIds: contractor.projectIds,
+        contextFiles: contractor.contextFiles,
+      });
+      
+      const updatedContractor = mapApiContractorToFrontend(apiContractor);
+      setContractors((prev) =>
+        prev.map((c) => (c.id === contractor.id ? updatedContractor : c))
+      );
+      
+      toast({
+        title: "Contractor updated",
+        description: `${updatedContractor.name} has been updated successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'update contractor');
+    }
   };
 
-  const deleteContractor = (id: string) => {
+  const deleteContractor = async (id: string) => {
     const contractorToDelete = contractors.find((c) => c.id === id);
     if (!contractorToDelete) return;
 
-    // Delete contractor
-    setContractors((prev) => prev.filter((c) => c.id !== id));
-
-    // Delete claims associated with this contractor
-    const claimsToDelete = claims.filter((c) => c.contractorId === id);
-    if (claimsToDelete.length > 0) {
-      setClaims((prev) =>
-        prev.filter((c) => !claimsToDelete.map((cd) => cd.id).includes(c.id))
-      );
+    try {
+      await contractorsApi.delete(id);
+      setContractors((prev) => prev.filter((c) => c.id !== id));
+      setClaims((prev) => prev.filter((c) => c.contractorId !== id));
+      
+      toast({
+        title: "Contractor deleted",
+        description: `${contractorToDelete.name} has been deleted successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'delete contractor');
     }
-
-    toast({
-      title: "Contractor deleted",
-      description: `${contractorToDelete.name} and all associated claims have been deleted.`,
-    });
   };
 
   // Claim functions
-  const addClaim = (claim: Omit<Claim, "id" | "createdAt">) => {
-    const newClaim = {
-      ...claim,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setClaims((prev) => [...prev, newClaim]);
-    toast({
-      title: "Claim created",
-      description: `${newClaim.title} has been created successfully.`,
-    });
+  const addClaim = async (claim: Omit<Claim, "id" | "createdAt">) => {
+    try {
+      const apiClaim = await claimsApi.create({
+        name: claim.title,
+        contractorId: claim.contractorId,
+        projectId: claim.projectId,
+        contextFiles: claim.contextFiles,
+      });
+      
+      const newClaim = mapApiClaimToFrontend(apiClaim);
+      setClaims((prev) => [...prev, newClaim]);
+      
+      toast({
+        title: "Claim created",
+        description: `${newClaim.title} has been created successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'create claim');
+    }
   };
 
-  const updateClaim = (claim: Claim) => {
-    setClaims((prev) => prev.map((c) => (c.id === claim.id ? claim : c)));
-    toast({
-      title: "Claim updated",
-      description: `${claim.title} has been updated successfully.`,
-    });
+  const updateClaim = async (claim: Claim) => {
+    try {
+      const apiClaim = await claimsApi.update(claim.id, {
+        name: claim.title,
+        contractorId: claim.contractorId,
+        projectId: claim.projectId,
+        contextFiles: claim.contextFiles,
+      });
+      
+      const updatedClaim = mapApiClaimToFrontend(apiClaim);
+      setClaims((prev) => prev.map((c) => (c.id === claim.id ? updatedClaim : c)));
+      
+      toast({
+        title: "Claim updated",
+        description: `${updatedClaim.title} has been updated successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'update claim');
+    }
   };
 
-  const deleteClaim = (id: string) => {
+  const deleteClaim = async (id: string) => {
     const claimToDelete = claims.find((c) => c.id === id);
     if (!claimToDelete) return;
 
-    setClaims((prev) => prev.filter((c) => c.id !== id));
-    toast({
-      title: "Claim deleted",
-      description: `${claimToDelete.title} has been deleted successfully.`,
-    });
+    try {
+      await claimsApi.delete(id);
+      setClaims((prev) => prev.filter((c) => c.id !== id));
+      
+      toast({
+        title: "Claim deleted",
+        description: `${claimToDelete.title} has been deleted successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'delete claim');
+    }
   };
 
   // Country functions
-  const addCountry = (country: Omit<Country, "id" | "createdAt">) => {
-    const newCountry = {
-      ...country,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    };
-    setCountries((prev) => [...prev, newCountry]);
-    toast({
-      title: "Country created",
-      description: `${newCountry.name} has been created successfully.`,
-    });
+  const addCountry = async (country: Omit<Country, "id" | "createdAt">) => {
+    try {
+      const apiCountry = await countriesApi.create({
+        name: country.name,
+        flagUrl: country.flag,
+        contextFiles: country.contextFiles,
+      });
+      
+      const newCountry = mapApiCountryToFrontend(apiCountry);
+      setCountries((prev) => [...prev, newCountry]);
+      
+      toast({
+        title: "Country created",
+        description: `${newCountry.name} has been created successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'create country');
+    }
   };
 
-  const updateCountry = (country: Country) => {
-    setCountries((prev) =>
-      prev.map((c) => (c.id === country.id ? country : c))
-    );
-    toast({
-      title: "Country updated",
-      description: `${country.name} has been updated successfully.`,
-    });
+  const updateCountry = async (country: Country) => {
+    try {
+      const apiCountry = await countriesApi.update(country.id, {
+        name: country.name,
+        flagUrl: country.flag,
+        contextFiles: country.contextFiles,
+      });
+      
+      const updatedCountry = mapApiCountryToFrontend(apiCountry);
+      setCountries((prev) =>
+        prev.map((c) => (c.id === country.id ? updatedCountry : c))
+      );
+      
+      toast({
+        title: "Country updated",
+        description: `${updatedCountry.name} has been updated successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'update country');
+    }
   };
 
-  const deleteCountry = (id: string) => {
+  const deleteCountry = async (id: string) => {
     const countryToDelete = countries.find((c) => c.id === id);
     if (!countryToDelete) return;
 
-    setCountries((prev) => prev.filter((c) => c.id !== id));
-    toast({
-      title: "Country deleted",
-      description: `${countryToDelete.name} has been deleted successfully.`,
-    });
+    try {
+      await countriesApi.delete(id);
+      setCountries((prev) => prev.filter((c) => c.id !== id));
+      
+      toast({
+        title: "Country deleted",
+        description: `${countryToDelete.name} has been deleted successfully.`,
+      });
+    } catch (error) {
+      handleApiError(error, 'delete country');
+    }
   };
 
   // Helper functions
@@ -312,6 +373,8 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     contractors,
     claims,
     countries,
+    loading,
+    error,
     addProject,
     updateProject,
     deleteProject,
@@ -332,6 +395,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     getProjectsByContractorId,
     getClaimsByProjectId,
     getClaimsByContractorId,
+    refreshData,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
