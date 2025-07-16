@@ -18,6 +18,8 @@ const ClaimDetail = () => {
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showClaimFiles, setShowClaimFiles] = useState(false);
+  const [showContractorFiles, setShowContractorFiles] = useState(false);
+  const [showProjectFiles, setShowProjectFiles] = useState(false);
   const [claim, setClaim] = useState<ClaimWithProjectContractorContextFiles | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,12 +168,12 @@ const ClaimDetail = () => {
                   {showClaimFiles ? (
                     <>
                       <FolderOpen className="mr-2 h-4 w-4 text-amber-600" />
-                      Hide Context Files
+                      Hide Claim Context Files
                     </>
                   ) : (
                     <>
                       <FolderClosed className="mr-2 h-4 w-4 text-amber-600" />
-                      Show Context Files ({claim.contextFiles.length})
+                      Show Claim Context Files ({claim.contextFiles.length})
                     </>
                   )}
                 </Button>
@@ -213,10 +215,48 @@ const ClaimDetail = () => {
             <CardContent>
               <Link 
                 to={`/projects/${claim.project.id}`}
-                className="block p-2 border rounded hover:bg-gray-50"
+                className="block p-2 border rounded hover:bg-gray-50 mb-2"
               >
                 {claim.project.name}
               </Link>
+              
+              {/* Project context files */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center w-full"
+                onClick={() => setShowProjectFiles(!showProjectFiles)}
+              >
+                {showProjectFiles ? (
+                  <>
+                    <FolderOpen className="mr-2 h-4 w-4 text-blue-600" />
+                    Hide Project Files
+                  </>
+                ) : (
+                  <>
+                    <FolderClosed className="mr-2 h-4 w-4 text-blue-600" />
+                    Show Project Files
+                  </>
+                )}
+              </Button>
+              
+              {showProjectFiles && (
+                <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
+                  {claim.project.contextFiles?.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No project context files</p>
+                  ) : (
+                    claim.project.contextFiles?.map((file) => {
+                      const fileName = file.path.split('/').pop() || file.path;
+                      return (
+                        <div key={file.id} className="flex items-center p-1 text-sm">
+                          <File className="h-3 w-3 text-blue-600 mr-1" />
+                          <span className="truncate">{fileName}</span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -231,10 +271,49 @@ const ClaimDetail = () => {
             <CardContent>
               <Link 
                 to={`/contractors/${claim.contractor.id}`}
-                className="block p-2 border rounded hover:bg-gray-50"
+                className="block p-2 border rounded hover:bg-gray-50 mb-2"
               >
                 {claim.contractor.name}
               </Link>
+              
+              {/* Contractor context files */}
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center w-full"
+                onClick={() => setShowContractorFiles(!showContractorFiles)}
+              >
+                {showContractorFiles ? (
+                  <>
+                    <FolderOpen className="mr-2 h-4 w-4 text-green-600" />
+                    Hide Contractor Files
+                  </>
+                ) : (
+                  <>
+                    <FolderClosed className="mr-2 h-4 w-4 text-green-600" />
+                    Show Contractor Files
+                  </>
+                )}
+              </Button>
+              
+              {showContractorFiles && (
+                <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
+                  {claim.contractor.contextFiles?.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No contractor context files</p>
+                  ) : (
+                    claim.contractor.contextFiles?.map((file) => {
+                      const fileName = file.path.split('/').pop() || file.path;
+                      return (
+                        <div key={file.id} className="flex items-center p-1 text-sm">
+                          <File className="h-3 w-3 text-green-600 mr-1" />
+                          <span className="truncate">{fileName}</span>
+                        </div>
+                      );
+                    })
+                  );
+                }}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

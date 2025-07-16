@@ -1,4 +1,3 @@
-
 // API Request/Response types based on OpenAPI schema
 export interface CountryRead {
   id: string;
@@ -58,8 +57,8 @@ export interface ClaimFileRead {
 }
 
 export interface ClaimWithProjectContractorContextFiles extends ClaimRead {
-  project: ProjectRead;
-  contractor: ContractorRead;
+  project: ProjectWithCountryContractorsClaimsContext;
+  contractor: ContractorWithProjectsClaimsContext;
   contextFiles: ContextFileRead[];
   claimFile: ClaimFileRead;
 }

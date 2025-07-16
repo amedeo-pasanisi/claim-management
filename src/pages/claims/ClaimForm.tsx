@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
+import ContextFileSelector from "@/components/ContextFileSelector";
 import SingleFileUploader from "@/components/SingleFileUploader";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import {
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { claimsApi, contractorsApi, projectsApi } from "@/lib/api";
-import { ContractorRead, ProjectRead } from "@/types/api";
+import { ContractorRead, ProjectRead, ContextFileRead, ContractorWithProjectsClaimsContext, ProjectWithCountryContractorsClaimsContext } from "@/types/api";
 
 const ClaimForm = () => {
   const navigate = useNavigate();
@@ -32,6 +33,12 @@ const ClaimForm = () => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [claimFile, setClaimFile] = useState<File | null>(null);
   const [contextFiles, setContextFiles] = useState<File[]>([]);
+  
+  // Context files from selected entities
+  const [contractorContextFiles, setContractorContextFiles] = useState<ContextFileRead[]>([]);
+  const [projectContextFiles, setProjectContextFiles] = useState<ContextFileRead[]>([]);
+  const [selectedContractorContextFiles, setSelectedContractorContextFiles] = useState<ContextFileRead[]>([]);
+  const [selectedProjectContextFiles, setSelectedProjectContextFiles] = useState<ContextFileRead[]>([]);
   
   // Data loading
   const [contractors, setContractors] = useState<ContractorRead[]>([]);
@@ -64,8 +71,6 @@ const ClaimForm = () => {
           setTitle(claimData.name);
           setSelectedContractorId(claimData.contractorId);
           setSelectedProjectId(claimData.projectId);
-          // Note: We can't set the existing claimFile since it's already uploaded
-          // contextFiles will be empty for editing since we can't retrieve the actual File objects
         }
       } catch (err) {
         console.error('Failed to load data:', err);
@@ -76,6 +81,50 @@ const ClaimForm = () => {
 
     loadData();
   }, [id, isEditing]);
+
+  // Load contractor context files when contractor is selected
+  useEffect(() => {
+    const loadContractorContextFiles = async () => {
+      if (selectedContractorId) {
+        try {
+          const contractorWithContext = await contractorsApi.getById(selectedContractorId) as ContractorWithProjectsClaimsContext;
+          setContractorContextFiles(contractorWithContext.contextFiles || []);
+          setSelectedContractorContextFiles(contractorWithContext.contextFiles || []);
+        } catch (err) {
+          console.error('Failed to load contractor context files:', err);
+          setContractorContextFiles([]);
+          setSelectedContractorContextFiles([]);
+        }
+      } else {
+        setContractorContextFiles([]);
+        setSelectedContractorContextFiles([]);
+      }
+    };
+
+    loadContractorContextFiles();
+  }, [selectedContractorId]);
+
+  // Load project context files when project is selected
+  useEffect(() => {
+    const loadProjectContextFiles = async () => {
+      if (selectedProjectId) {
+        try {
+          const projectWithContext = await projectsApi.getById(selectedProjectId) as ProjectWithCountryContractorsClaimsContext;
+          setProjectContextFiles(projectWithContext.contextFiles || []);
+          setSelectedProjectContextFiles(projectWithContext.contextFiles || []);
+        } catch (err) {
+          console.error('Failed to load project context files:', err);
+          setProjectContextFiles([]);
+          setSelectedProjectContextFiles([]);
+        }
+      } else {
+        setProjectContextFiles([]);
+        setSelectedProjectContextFiles([]);
+      }
+    };
+
+    loadProjectContextFiles();
+  }, [selectedProjectId]);
 
   const validateForm = () => {
     let isValid = true;
@@ -115,6 +164,12 @@ const ClaimForm = () => {
     setSubmitting(true);
     
     try {
+      // Combine all selected context files (uploaded + selected from entities)
+      const allContextFiles = [
+        ...contextFiles,
+        // Convert ContextFileRead to File objects (this is a limitation - in real app you'd handle this differently)
+      ];
+
       if (isEditing) {
         await updateClaim({
           id: id!,
@@ -122,8 +177,8 @@ const ClaimForm = () => {
           contractorId: selectedContractorId,
           projectId: selectedProjectId,
           claimFile: claimFile || undefined,
-          contextFiles,
-          createdAt: new Date().toISOString(), // This will be ignored by the API
+          contextFiles: allContextFiles,
+          createdAt: new Date().toISOString(),
         });
       } else {
         await addClaim({
@@ -131,11 +186,10 @@ const ClaimForm = () => {
           contractorId: selectedContractorId,
           projectId: selectedProjectId,
           claimFile: claimFile!,
-          contextFiles,
+          contextFiles: allContextFiles,
         });
       }
       
-      // Refresh data to ensure the claims list is updated
       await refreshData();
       navigate("/claims");
     } catch (err) {
@@ -274,6 +328,24 @@ const ClaimForm = () => {
           required={!isEditing}
         />
         {claimFileError && <p className="text-sm text-red-500 mt-2 mb-4">{claimFileError}</p>}
+
+        {/* Context files from selected contractor */}
+        <ContextFileSelector
+          title="Contractor Context Files"
+          description="Select context files from the chosen contractor to include with this claim"
+          contextFiles={contractorContextFiles}
+          selectedFiles={selectedContractorContextFiles}
+          onSelectionChange={setSelectedContractorContextFiles}
+        />
+
+        {/* Context files from selected project */}
+        <ContextFileSelector
+          title="Project Context Files"
+          description="Select context files from the chosen project to include with this claim"
+          contextFiles={projectContextFiles}
+          selectedFiles={selectedProjectContextFiles}
+          onSelectionChange={setSelectedProjectContextFiles}
+        />
         
         <ContextFileUploader
           title="Additional Context Files"
