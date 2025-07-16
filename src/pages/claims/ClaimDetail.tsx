@@ -15,7 +15,7 @@ const ClaimDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { deleteClaim } = useApp();
-  
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showClaimFiles, setShowClaimFiles] = useState(false);
   const [showContractorFiles, setShowContractorFiles] = useState(false);
@@ -73,9 +73,9 @@ const ClaimDetail = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             onClick={() => navigate("/claims")}
           >
@@ -89,7 +89,7 @@ const ClaimDetail = () => {
           </div>
         </div>
         <div className="flex space-x-2">
-          <Button 
+          <Button
             variant="outline"
             className="flex items-center"
             onClick={() => navigate(`/claims/${id}/edit`)}
@@ -97,8 +97,8 @@ const ClaimDetail = () => {
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            variant="destructive"
             className="flex items-center"
             onClick={() => setIsDeleteDialogOpen(true)}
           >
@@ -122,10 +122,10 @@ const ClaimDetail = () => {
                 <h3 className="font-medium mb-1">Title</h3>
                 <p>{claim.name}</p>
               </div>
-              
+
               <div>
                 <h3 className="font-medium mb-1">Project</h3>
-                <Link 
+                <Link
                   to={`/projects/${claim.project.id}`}
                   className="text-blue-600 hover:text-blue-800 underline"
                 >
@@ -135,7 +135,7 @@ const ClaimDetail = () => {
 
               <div>
                 <h3 className="font-medium mb-1">Contractor</h3>
-                <Link 
+                <Link
                   to={`/contractors/${claim.contractor.id}`}
                   className="text-blue-600 hover:text-blue-800 underline"
                 >
@@ -157,10 +157,10 @@ const ClaimDetail = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   className="flex items-center mb-2"
                   onClick={() => setShowClaimFiles(!showClaimFiles)}
@@ -177,7 +177,7 @@ const ClaimDetail = () => {
                     </>
                   )}
                 </Button>
-                
+
                 {showClaimFiles && (
                   <div className="border rounded-md p-4 space-y-2">
                     {claim.contextFiles.length === 0 ? (
@@ -186,8 +186,8 @@ const ClaimDetail = () => {
                       claim.contextFiles.map((file) => {
                         const fileName = file.path.split('/').pop() || file.path;
                         return (
-                          <div 
-                            key={file.id} 
+                          <div
+                            key={file.id}
                             className="flex items-center p-2 border rounded bg-gray-50"
                           >
                             <File className="h-4 w-4 text-amber-600 mr-2" />
@@ -213,16 +213,16 @@ const ClaimDetail = () => {
               <CardDescription>Project this claim belongs to</CardDescription>
             </CardHeader>
             <CardContent>
-              <Link 
+              <Link
                 to={`/projects/${claim.project.id}`}
                 className="block p-2 border rounded hover:bg-gray-50 mb-2"
               >
                 {claim.project.name}
               </Link>
-              
+
               {/* Project context files */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="flex items-center w-full"
                 onClick={() => setShowProjectFiles(!showProjectFiles)}
@@ -239,7 +239,7 @@ const ClaimDetail = () => {
                   </>
                 )}
               </Button>
-              
+
               {showProjectFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
                   {claim.project.contextFiles?.length === 0 ? (
@@ -269,16 +269,16 @@ const ClaimDetail = () => {
               <CardDescription>Contractor this claim belongs to</CardDescription>
             </CardHeader>
             <CardContent>
-              <Link 
+              <Link
                 to={`/contractors/${claim.contractor.id}`}
                 className="block p-2 border rounded hover:bg-gray-50 mb-2"
               >
                 {claim.contractor.name}
               </Link>
-              
+
               {/* Contractor context files */}
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="flex items-center w-full"
                 onClick={() => setShowContractorFiles(!showContractorFiles)}
@@ -295,23 +295,25 @@ const ClaimDetail = () => {
                   </>
                 )}
               </Button>
-              
+
               {showContractorFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {claim.contractor.contextFiles?.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No contractor context files</p>
-                  ) : (
-                    claim.contractor.contextFiles?.map((file) => {
-                      const fileName = file.path.split('/').pop() || file.path;
-                      return (
-                        <div key={file.id} className="flex items-center p-1 text-sm">
-                          <File className="h-3 w-3 text-green-600 mr-1" />
-                          <span className="truncate">{fileName}</span>
-                        </div>
-                      );
-                    })
-                  );
-                }}
+                  {
+                    claim.contractor.contextFiles?.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No contractor context files</p>
+                    ) :
+                    (
+                      claim.contractor.contextFiles?.map((file) => {
+                        const fileName = file.path.split('/').pop() || file.path;
+                        return (
+                          <div key={file.id} className="flex items-center p-1 text-sm">
+                            <File className="h-3 w-3 text-green-600 mr-1" />
+                            <span className="truncate">{fileName}</span>
+                          </div>
+                        );
+                      })
+                    )
+                  }
                 </div>
               )}
             </CardContent>

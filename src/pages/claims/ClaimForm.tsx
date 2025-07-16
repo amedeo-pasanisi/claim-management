@@ -33,19 +33,19 @@ const ClaimForm = () => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [claimFile, setClaimFile] = useState<File | null>(null);
   const [contextFiles, setContextFiles] = useState<File[]>([]);
-  
+
   // Context files from selected entities
   const [contractorContextFiles, setContractorContextFiles] = useState<ContextFileRead[]>([]);
   const [projectContextFiles, setProjectContextFiles] = useState<ContextFileRead[]>([]);
   const [selectedContractorContextFiles, setSelectedContractorContextFiles] = useState<ContextFileRead[]>([]);
   const [selectedProjectContextFiles, setSelectedProjectContextFiles] = useState<ContextFileRead[]>([]);
-  
+
   // Data loading
   const [contractors, setContractors] = useState<ContractorRead[]>([]);
   const [projects, setProjects] = useState<ProjectRead[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Validation errors
   const [titleError, setTitleError] = useState("");
   const [contractorError, setContractorError] = useState("");
@@ -61,7 +61,7 @@ const ClaimForm = () => {
           contractorsApi.getAll(),
           projectsApi.getAll()
         ]);
-        
+
         setContractors(contractorsData);
         setProjects(projectsData);
 
@@ -162,7 +162,7 @@ const ClaimForm = () => {
     }
 
     setSubmitting(true);
-    
+
     try {
       // Combine all selected context files (uploaded + selected from entities)
       const allContextFiles = [
@@ -189,7 +189,7 @@ const ClaimForm = () => {
           contextFiles: allContextFiles,
         });
       }
-      
+
       await refreshData();
       navigate("/claims");
     } catch (err) {
@@ -207,9 +207,9 @@ const ClaimForm = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             className="mr-2"
             onClick={() => navigate("/claims")}
           >
@@ -247,8 +247,8 @@ const ClaimForm = () => {
                 {contractors.length === 0 ? (
                   <div className="border rounded-md p-4">
                     <p className="text-gray-500">No contractors available. Please create a contractor first.</p>
-                    <Button 
-                      className="mt-2" 
+                    <Button
+                      className="mt-2"
                       size="sm"
                       onClick={() => navigate("/contractors/new")}
                     >
@@ -316,7 +316,7 @@ const ClaimForm = () => {
             </div>
           </CardContent>
         </Card>
-        
+
         <SingleFileUploader
           title="Main Claim File"
           description={`Upload the primary claim document${isEditing ? ' (leave empty to keep existing file)' : ''}`}
@@ -346,17 +346,17 @@ const ClaimForm = () => {
           selectedFiles={selectedProjectContextFiles}
           onSelectionChange={setSelectedProjectContextFiles}
         />
-        
+
         <ContextFileUploader
           title="Additional Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
         />
-        
+
         <div className="flex justify-between mt-6">
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="outline"
             onClick={() => navigate("/claims")}
             disabled={submitting}
