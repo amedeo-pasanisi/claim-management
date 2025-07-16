@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
+import SingleFileUploader from "@/components/SingleFileUploader";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Select,
@@ -22,7 +23,7 @@ import { ContractorRead, ProjectRead } from "@/types/api";
 const ClaimForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { addClaim, updateClaim } = useApp();
+  const { addClaim, updateClaim, refreshData } = useApp();
   const isEditing = !!id;
 
   // Form state
@@ -133,23 +134,15 @@ const ClaimForm = () => {
           contextFiles,
         });
       }
+      
+      // Refresh data to ensure the claims list is updated
+      await refreshData();
       navigate("/claims");
     } catch (err) {
       console.error('Failed to save claim:', err);
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleClaimFileChange = (files: File[]) => {
-    console.log('Claim file change:', files);
-    setClaimFile(files.length > 0 ? files[files.length - 1] : null);
-    if (files.length > 0) setClaimFileError("");
-  };
-
-  const handleContextFilesChange = (files: File[]) => {
-    console.log('Context files change:', files);
-    setContextFiles(files);
   };
 
   if (loading) {
@@ -270,11 +263,15 @@ const ClaimForm = () => {
           </CardContent>
         </Card>
         
-        <ContextFileUploader
+        <SingleFileUploader
           title="Main Claim File"
           description={`Upload the primary claim document${isEditing ? ' (leave empty to keep existing file)' : ''}`}
-          contextFiles={claimFile ? [claimFile] : []}
-          setContextFiles={handleClaimFileChange}
+          file={claimFile}
+          setFile={(file) => {
+            setClaimFile(file);
+            if (file) setClaimFileError("");
+          }}
+          required={!isEditing}
         />
         {claimFileError && <p className="text-sm text-red-500 mt-2 mb-4">{claimFileError}</p>}
         
@@ -282,7 +279,7 @@ const ClaimForm = () => {
           title="Additional Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
-          setContextFiles={handleContextFilesChange}
+          setContextFiles={setContextFiles}
         />
         
         <div className="flex justify-between mt-6">
