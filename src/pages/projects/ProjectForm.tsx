@@ -2,41 +2,46 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
-import { Project } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
-import FlagImage from "@/components/FlagImage";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const ProjectForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { addProject, updateProject, getProjectById, countries } = useApp();
+  const { projects, countries, addProject, updateProject, loading } = useApp();
   const isEditing = !!id;
 
   const [title, setTitle] = useState("");
-  const [countryId, setCountryId] = useState("");
+  const [selectedCountryId, setSelectedCountryId] = useState("");
   const [contextFiles, setContextFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Form validation errors
   const [titleError, setTitleError] = useState("");
   const [countryError, setCountryError] = useState("");
 
-  // Load project data when editing
   useEffect(() => {
-    if (isEditing) {
-      const project = getProjectById(id);
+    if (isEditing && id) {
+      const project = projects.find((p) => p.id === id);
       if (project) {
         setTitle(project.title);
-        setCountryId(project.countryId);
-        setContextFiles(project.contextFiles);
-      } else {
-        navigate("/projects", { replace: true });
+        setSelectedCountryId(project.countryId);
+        // Note: contextFiles can't be populated from existing data
       }
     }
-  }, [id, isEditing, getProjectById, navigate]);
+  }, [id, isEditing, projects]);
 
   const validateForm = () => {
     let isValid = true;
@@ -46,40 +51,50 @@ const ProjectForm = () => {
     } else {
       setTitleError("");
     }
-    
-    if (!countryId) {
-      setCountryError("Country selection is required");
+    if (!selectedCountryId) {
+      setCountryError("A country must be selected");
       isValid = false;
     } else {
       setCountryError("");
     }
-    
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
       return;
     }
-    const projectData = {
-      title,
-      countryId,
-      contextFiles,
-    };
-    if (isEditing && id) {
-      const existingProject = getProjectById(id);
-      if (existingProject) {
-        updateProject({
-          ...existingProject,
-          ...projectData,
+
+    setSubmitting(true);
+    
+    try {
+      if (isEditing) {
+        await updateProject({
+          id: id!,
+          title,
+          countryId: selectedCountryId,
+          contextFiles,
+          createdAt: new Date().toISOString(), // This will be ignored by the API
+        });
+      } else {
+        await addProject({
+          title,
+          countryId: selectedCountryId,
+          contextFiles,
         });
       }
-    } else {
-      addProject(projectData);
+      navigate("/projects");
+    } catch (err) {
+      console.error('Failed to save project:', err);
+    } finally {
+      setSubmitting(false);
     }
-    navigate("/projects");
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="space-y-6">
@@ -98,7 +113,7 @@ const ProjectForm = () => {
           </h1>
         </div>
       </div>
-
+      
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="pt-6">
@@ -119,46 +134,52 @@ const ProjectForm = () => {
                 />
                 {titleError && <p className="text-sm text-red-500">{titleError}</p>}
               </div>
-
               <div className="grid gap-2">
                 <Label htmlFor="country">
                   Country <span className="text-red-500">*</span>
                 </Label>
-                <Select 
-                  value={countryId} 
-                  onValueChange={(value) => {
-                    setCountryId(value);
-                    if (value) setCountryError("");
-                  }}
-                >
-                  <SelectTrigger className={countryError ? "border-red-500" : ""}>
-                    <SelectValue placeholder="Select a country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {countries.map((country) => (
-                      <SelectItem key={country.id} value={country.id}>
-                        <div className="flex items-center gap-2">
-                          <FlagImage 
-                            src={country.flag}
-                            alt={`${country.name} flag`}
-                            className="w-4 h-3 object-cover rounded-sm"
-                            fallbackText={country.code}
-                          />
-                          <span>{country.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {countryError && <p className="text-sm text-red-500">{countryError}</p>}
+                {countries.length === 0 ? (
+                  <div className="border rounded-md p-4">
+                    <p className="text-gray-500">No countries available. Please create a country first.</p>
+                    <Button 
+                      className="mt-2" 
+                      size="sm"
+                      onClick={() => navigate("/countries/new")}
+                    >
+                      Create Country
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Select
+                      value={selectedCountryId}
+                      onValueChange={(value) => {
+                        setSelectedCountryId(value);
+                        if (value) setCountryError("");
+                      }}
+                    >
+                      <SelectTrigger className={countryError ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select a country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((country) => (
+                          <SelectItem key={country.id} value={country.id}>
+                            {country.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {countryError && <p className="text-sm text-red-500">{countryError}</p>}
+                  </>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
         <ContextFileUploader
-          title="Project Context Files"
-          description="Upload files that provide context for this project"
+          title="Context Files"
+          description="Upload any additional documents related to this project (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
         />
@@ -168,12 +189,13 @@ const ProjectForm = () => {
             type="button" 
             variant="outline"
             onClick={() => navigate("/projects")}
+            disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" className="flex items-center">
+          <Button type="submit" className="flex items-center" disabled={submitting}>
             <Save className="mr-2 h-4 w-4" />
-            {isEditing ? "Update Project" : "Create Project"}
+            {submitting ? 'Saving...' : (isEditing ? "Update Project" : "Create Project")}
           </Button>
         </div>
       </form>

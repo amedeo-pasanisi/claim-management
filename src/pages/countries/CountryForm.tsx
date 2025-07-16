@@ -1,179 +1,157 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useForm } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
+import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useApp } from "@/context/AppContext";
-import { Country } from "@/types";
-import { countries, CountryData } from "@/data/countries";
+import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
-import FlagImage from "@/components/FlagImage";
-
-type CountryFormData = {
-  selectedCountry: string;
-};
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const CountryForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEditing = Boolean(id);
-  
-  const { addCountry, updateCountry, getCountryById } = useApp();
+  const { countries, addCountry, updateCountry, loading } = useApp();
+  const isEditing = !!id;
+
+  const [name, setName] = useState("");
+  const [flagUrl, setFlagUrl] = useState("");
   const [contextFiles, setContextFiles] = useState<File[]>([]);
-  const [selectedCountryData, setSelectedCountryData] = useState<CountryData | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  const { register, handleSubmit, setValue, watch } = useForm<CountryFormData>();
-  const selectedCountry = watch("selectedCountry");
+  // Form validation errors
+  const [nameError, setNameError] = useState("");
 
   useEffect(() => {
     if (isEditing && id) {
-      const country = getCountryById(id);
+      const country = countries.find((c) => c.id === id);
       if (country) {
-        setValue("selectedCountry", country.code);
-        setContextFiles(country.contextFiles || []);
-        const countryData = countries.find(c => c.code === country.code);
-        if (countryData) {
-          setSelectedCountryData(countryData);
-        }
+        setName(country.name);
+        setFlagUrl(country.flag || "");
+        // Note: contextFiles can't be populated from existing data
       }
     }
-  }, [id, isEditing, getCountryById, setValue]);
+  }, [id, isEditing, countries]);
 
-  useEffect(() => {
-    if (selectedCountry) {
-      const countryData = countries.find(c => c.code === selectedCountry);
-      setSelectedCountryData(countryData || null);
-    }
-  }, [selectedCountry]);
-
-  const onSubmit = (data: CountryFormData) => {
-    const countryData = countries.find(c => c.code === data.selectedCountry);
-    if (!countryData) return;
-
-    const countryPayload = {
-      name: countryData.name,
-      code: countryData.code,
-      flag: countryData.flag,
-      contextFiles,
-    };
-
-    if (isEditing && id) {
-      const existingCountry = getCountryById(id);
-      if (existingCountry) {
-        updateCountry({
-          ...existingCountry,
-          ...countryPayload,
-        });
-      }
+  const validateForm = () => {
+    let isValid = true;
+    if (!name.trim()) {
+      setNameError("Country name is required");
+      isValid = false;
     } else {
-      addCountry(countryPayload);
+      setNameError("");
     }
-
-    navigate("/countries");
+    return isValid;
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
+
+    setSubmitting(true);
+    
+    try {
+      if (isEditing) {
+        await updateCountry({
+          id: id!,
+          name,
+          flag: flagUrl || null,
+          contextFiles,
+          createdAt: new Date().toISOString(), // This will be ignored by the API
+        });
+      } else {
+        await addCountry({
+          name,
+          flag: flagUrl || null,
+          contextFiles,
+        });
+      }
+      navigate("/countries");
+    } catch (err) {
+      console.error('Failed to save country:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => navigate("/countries")}
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {isEditing ? "Edit Country" : "Add New Country"}
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="mr-2"
+            onClick={() => navigate("/countries")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isEditing ? "Edit Country" : "New Country"}
           </h1>
-          <p className="text-gray-600 mt-1">
-            {isEditing ? "Update country information" : "Select a country and add context files"}
-          </p>
         </div>
       </div>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      
+      <form onSubmit={handleSubmit}>
         <Card>
-          <CardHeader>
-            <CardTitle>Country Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="country">Select Country *</Label>
-              <Select
-                onValueChange={(value) => setValue("selectedCountry", value)}
-                value={selectedCountry}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a country..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {countries.map((country) => (
-                    <SelectItem key={country.code} value={country.code}>
-                      <div className="flex items-center gap-2">
-                        <FlagImage 
-                          src={country.flag}
-                          alt={`${country.name} flag`}
-                          className="w-6 h-4 object-cover rounded-sm"
-                          fallbackText={country.code}
-                        />
-                        <span>{country.name}</span>
-                        <span className="text-gray-500">({country.code})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {selectedCountryData && (
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-md">
-                  <FlagImage 
-                    src={selectedCountryData.flag}
-                    alt={`${selectedCountryData.name} flag`}
-                    className="w-8 h-6 object-cover rounded-sm"
-                    fallbackText={selectedCountryData.code}
-                  />
-                  <div>
-                    <div className="font-medium">{selectedCountryData.name}</div>
-                    <div className="text-sm text-gray-600">{selectedCountryData.code}</div>
-                  </div>
-                </div>
-              )}
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">
+                  Country Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (e.target.value.trim()) setNameError("");
+                  }}
+                  placeholder="Enter country name"
+                  className={nameError ? "border-red-500" : ""}
+                />
+                {nameError && <p className="text-sm text-red-500">{nameError}</p>}
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="flagUrl">Flag URL (optional)</Label>
+                <Input
+                  id="flagUrl"
+                  value={flagUrl}
+                  onChange={(e) => setFlagUrl(e.target.value)}
+                  placeholder="Enter flag image URL"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
 
         <ContextFileUploader
-          title="Country Context Files"
-          description="Upload files related to this country (optional)"
+          title="Context Files"
+          description="Upload any additional documents related to this country (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
         />
 
-        <div className="flex gap-4">
-          <Button
-            type="button"
+        <div className="flex justify-between mt-6">
+          <Button 
+            type="button" 
             variant="outline"
             onClick={() => navigate("/countries")}
-            className="flex-1"
+            disabled={submitting}
           >
             Cancel
           </Button>
-          <Button
-            type="submit"
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
-            disabled={!selectedCountry}
-          >
-            {isEditing ? "Update Country" : "Create Country"}
+          <Button type="submit" className="flex items-center" disabled={submitting}>
+            <Save className="mr-2 h-4 w-4" />
+            {submitting ? 'Saving...' : (isEditing ? "Update Country" : "Create Country")}
           </Button>
         </div>
       </form>

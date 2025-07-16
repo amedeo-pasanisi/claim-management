@@ -141,14 +141,16 @@ const ClaimForm = () => {
     }
   };
 
-  const handleClaimFileChange: React.Dispatch<React.SetStateAction<File[]>> =
-    (setStateAction) => {
-      const files = typeof setStateAction === "function"
-        ? setStateAction([])
-        : setStateAction;
-      setClaimFile(files.length > 0 ? files[files.length-1] : null);
-      if (files.length > 0) setClaimFileError("");
-    };
+  const handleClaimFileChange = (files: File[]) => {
+    console.log('Claim file change:', files);
+    setClaimFile(files.length > 0 ? files[files.length - 1] : null);
+    if (files.length > 0) setClaimFileError("");
+  };
+
+  const handleContextFilesChange = (files: File[]) => {
+    console.log('Context files change:', files);
+    setContextFiles(files);
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -280,7 +282,7 @@ const ClaimForm = () => {
           title="Additional Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
-          setContextFiles={setContextFiles}
+          setContextFiles={handleContextFilesChange}
         />
         
         <div className="flex justify-between mt-6">
