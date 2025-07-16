@@ -7,7 +7,7 @@ import {
   ContractorRead,
   ContractorWithProjectsClaimsContext,
   ClaimRead,
-  ClaimWithProjectContractorContext,
+  ClaimWithProjectContractorContextFiles,
   CreateCountryRequest,
   UpdateCountryRequest,
   CreateProjectRequest,
@@ -138,8 +138,6 @@ export const countriesApi = {
 
   async create(data: CreateCountryRequest): Promise<CountryRead> {
     const formData = createFormData({
-      name: data.name,
-      flagUrl: data.flagUrl,
       contextFiles: data.contextFiles || [],
     });
     
@@ -176,7 +174,6 @@ export const projectsApi = {
 
   async create(data: CreateProjectRequest): Promise<ProjectWithCountryContractorsClaimsContext> {
     const formData = createFormData({
-      contractors_ids: data.contractors_ids || [],
       contextFiles: data.contextFiles || [],
     });
     
@@ -245,21 +242,23 @@ export const claimsApi = {
     return httpClient.get<ClaimRead[]>('/api/v1/claims/', { offset, limit });
   },
 
-  async getById(id: string): Promise<ClaimWithProjectContractorContext> {
-    return httpClient.get<ClaimWithProjectContractorContext>(`/api/v1/claims/${id}`);
+  async getById(id: string): Promise<ClaimWithProjectContractorContextFiles> {
+    return httpClient.get<ClaimWithProjectContractorContextFiles>(`/api/v1/claims/${id}`);
   },
 
-  async create(data: CreateClaimRequest): Promise<ClaimWithProjectContractorContext> {
+  async create(data: CreateClaimRequest): Promise<ClaimWithProjectContractorContextFiles> {
     const formData = createFormData({
+      claimFile: data.claimFile,
       contextFiles: data.contextFiles || [],
     });
     
     const url = `/api/v1/claims/?name=${encodeURIComponent(data.name)}&contractorId=${data.contractorId}&projectId=${data.projectId}`;
-    return httpClient.post<ClaimWithProjectContractorContext>(url, formData);
+    return httpClient.post<ClaimWithProjectContractorContextFiles>(url, formData);
   },
 
-  async update(id: string, data: UpdateClaimRequest): Promise<ClaimWithProjectContractorContext> {
+  async update(id: string, data: UpdateClaimRequest): Promise<ClaimWithProjectContractorContextFiles> {
     const formData = createFormData({
+      claimFile: data.claimFile,
       contextFiles: data.contextFiles,
     });
     
@@ -269,7 +268,7 @@ export const claimsApi = {
     if (data.projectId) params.append('projectId', data.projectId);
     
     const url = `/api/v1/claims/${id}?${params.toString()}`;
-    return httpClient.patch<ClaimWithProjectContractorContext>(url, formData);
+    return httpClient.patch<ClaimWithProjectContractorContextFiles>(url, formData);
   },
 
   async delete(id: string): Promise<void> {

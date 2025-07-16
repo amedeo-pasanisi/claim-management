@@ -5,11 +5,11 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban } from "lucide-react";
+import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban, FileText } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { claimsApi } from "@/lib/api";
-import { ClaimWithProjectContractorContext } from "@/types/api";
+import { ClaimWithProjectContractorContextFiles } from "@/types/api";
 
 const ClaimDetail = () => {
   const { id } = useParams();
@@ -18,7 +18,7 @@ const ClaimDetail = () => {
   
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showClaimFiles, setShowClaimFiles] = useState(false);
-  const [claim, setClaim] = useState<ClaimWithProjectContractorContext | null>(null);
+  const [claim, setClaim] = useState<ClaimWithProjectContractorContextFiles | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -139,6 +139,21 @@ const ClaimDetail = () => {
                 >
                   {claim.contractor.name}
                 </Link>
+              </div>
+
+              <div>
+                <h3 className="font-medium mb-1">Main Claim File</h3>
+                <div className="border rounded-md p-4">
+                  <div className="flex items-center p-2 border rounded bg-gray-50">
+                    <FileText className="h-4 w-4 text-blue-600 mr-2" />
+                    <span className="text-sm">
+                      {claim.claimFile.path.split('/').pop() || claim.claimFile.path}
+                    </span>
+                    <Badge variant="secondary" className="ml-2 text-xs">
+                      Uploaded {new Date(claim.claimFile.created_at).toLocaleDateString()}
+                    </Badge>
+                  </div>
+                </div>
               </div>
               
               <div>

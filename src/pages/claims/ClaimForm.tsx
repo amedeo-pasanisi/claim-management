@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   Select,
   SelectContent,
@@ -15,20 +16,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { claimsApi, contractorsApi, projectsApi } from "@/lib/api";
+import { ClaimWithProjectContractorContextFiles, ContractorRead, ProjectRead } from "@/types/api";
 
 const ClaimForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { 
-    addClaim, 
-    updateClaim, 
-    getClaimById, 
-    contractors, 
-    getProjectsByContractorId, 
-    getProjectById, 
-    getContractorById 
-  } = useApp();
   const isEditing = !!id;
 
   // Form state
@@ -37,11 +30,12 @@ const ClaimForm = () => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [claimFile, setClaimFile] = useState<File | null>(null);
   const [contextFiles, setContextFiles] = useState<File[]>([]);
-  const [includedProjectContext, setIncludedProjectContext] = useState(true);
-  const [includedContractorContext, setIncludedContractorContext] = useState(true);
   
-  // Available projects based on selected contractor
-  const [availableProjects, setAvailableProjects] = useState<Array<{id: string; title: string}>>([]);
+  // Data loading
+  const [contractors, setContractors] = useState<ContractorRead[]>([]);
+  const [projects, setProjects] = useState<ProjectRead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   
   // Validation errors
   const [titleError, setTitleError] = useState("");
@@ -49,46 +43,37 @@ const ClaimForm = () => {
   const [projectError, setProjectError] = useState("");
   const [claimFileError, setClaimFileError] = useState("");
 
-  // Load claim data when editing
+  // Load data on component mount
   useEffect(() => {
-    if (isEditing) {
-      const claim = getClaimById(id);
-      if (claim) {
-        setTitle(claim.title);
-        setSelectedContractorId(claim.contractorId);
-        setSelectedProjectId(claim.projectId);
-        if (claim.claimFile) {
-          setClaimFile(claim.claimFile);
-        }
-        setContextFiles(claim.contextFiles);
-        setIncludedProjectContext(claim.includedProjectContext);
-        setIncludedContractorContext(claim.includedContractorContext);
-      } else {
-        navigate("/claims", { replace: true });
-      }
-    }
-  }, [id, isEditing, getClaimById, navigate]);
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [contractorsData, projectsData] = await Promise.all([
+          contractorsApi.getAll(),
+          projectsApi.getAll()
+        ]);
+        
+        setContractors(contractorsData);
+        setProjects(projectsData);
 
-  // Update available projects when contractor changes
-  useEffect(() => {
-    if (selectedContractorId) {
-      const contractorProjects = getProjectsByContractorId(selectedContractorId);
-      setAvailableProjects(contractorProjects.map(p => ({ id: p.id, title: p.title })));
-      
-      // Reset selected project if not in available projects
-      if (selectedProjectId && !contractorProjects.some(p => p.id === selectedProjectId)) {
-        setSelectedProjectId("");
+        // If editing, load claim data
+        if (isEditing && id) {
+          const claimData = await claimsApi.getById(id);
+          setTitle(claimData.name);
+          setSelectedContractorId(claimData.contractorId);
+          setSelectedProjectId(claimData.projectId);
+          // Note: We can't set the existing claimFile since it's already uploaded
+          // contextFiles will be empty for editing since we can't retrieve the actual File objects
+        }
+      } catch (err) {
+        console.error('Failed to load data:', err);
+      } finally {
+        setLoading(false);
       }
-      
-      // Auto-select project if there's only one
-      if (contractorProjects.length === 1 && !selectedProjectId) {
-        setSelectedProjectId(contractorProjects[0].id);
-      }
-    } else {
-      setAvailableProjects([]);
-      setSelectedProjectId("");
-    }
-  }, [selectedContractorId, getProjectsByContractorId, selectedProjectId]);
+    };
+
+    loadData();
+  }, [id, isEditing]);
 
   const validateForm = () => {
     let isValid = true;
@@ -110,7 +95,7 @@ const ClaimForm = () => {
     } else {
       setProjectError("");
     }
-    if (!claimFile) {
+    if (!claimFile && !isEditing) {
       setClaimFileError("A claim file must be uploaded");
       isValid = false;
     } else {
@@ -119,41 +104,52 @@ const ClaimForm = () => {
     return isValid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm() || !claimFile) {
+    if (!validateForm()) {
       return;
     }
-    const claimData = {
-      title,
-      contractorId: selectedContractorId,
-      projectId: selectedProjectId,
-      claimFile,
-      contextFiles,
-      includedProjectContext,
-      includedContractorContext,
-    };
-    if (isEditing && id) {
-      const existingClaim = getClaimById(id);
-      if (existingClaim) {
-        updateClaim({
-          ...existingClaim,
-          ...claimData,
+
+    setSubmitting(true);
+    
+    try {
+      if (isEditing && id) {
+        await claimsApi.update(id, {
+          name: title,
+          contractorId: selectedContractorId,
+          projectId: selectedProjectId,
+          claimFile: claimFile || undefined,
+          contextFiles,
+        });
+      } else {
+        await claimsApi.create({
+          name: title,
+          contractorId: selectedContractorId,
+          projectId: selectedProjectId,
+          claimFile: claimFile!,
+          contextFiles,
         });
       }
-    } else {
-      addClaim(claimData);
+      navigate("/claims");
+    } catch (err) {
+      console.error('Failed to save claim:', err);
+    } finally {
+      setSubmitting(false);
     }
-    navigate("/claims");
   };
 
   const handleClaimFileChange: React.Dispatch<React.SetStateAction<File[]>> =
     (setStateAction) => {
       const files = typeof setStateAction === "function"
-        ? setStateAction([claimFile])
+        ? setStateAction([])
         : setStateAction;
       setClaimFile(files.length > 0 ? files[files.length-1] : null);
+      if (files.length > 0) setClaimFileError("");
     };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="space-y-6">
@@ -231,108 +227,71 @@ const ClaimForm = () => {
                   </>
                 )}
               </div>
-              {selectedContractorId && (
-                <div className="grid gap-2">
-                  <Label htmlFor="project">
-                    Project <span className="text-red-500">*</span>
-                  </Label>
-                  {availableProjects.length === 0 ? (
-                    <div className="border rounded-md p-4">
-                      <p className="text-gray-500">
-                        No projects available for this contractor. Please add projects to this contractor first.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <Select
-                        value={selectedProjectId}
-                        onValueChange={(value) => {
-                          setSelectedProjectId(value);
-                          if (value) setProjectError("");
-                        }}
-                      >
-                        <SelectTrigger className={projectError ? "border-red-500" : ""}>
-                          <SelectValue placeholder="Select a project" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableProjects.map((project) => (
-                            <SelectItem key={project.id} value={project.id}>
-                              {project.title}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {projectError && <p className="text-sm text-red-500">{projectError}</p>}
-                    </>
-                  )}
-                </div>
-              )}
+              <div className="grid gap-2">
+                <Label htmlFor="project">
+                  Project <span className="text-red-500">*</span>
+                </Label>
+                {projects.length === 0 ? (
+                  <div className="border rounded-md p-4">
+                    <p className="text-gray-500">
+                      No projects available. Please create a project first.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Select
+                      value={selectedProjectId}
+                      onValueChange={(value) => {
+                        setSelectedProjectId(value);
+                        if (value) setProjectError("");
+                      }}
+                    >
+                      <SelectTrigger className={projectError ? "border-red-500" : ""}>
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {projectError && <p className="text-sm text-red-500">{projectError}</p>}
+                  </>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
+        
         <ContextFileUploader
           title="Main Claim File"
-          description="Upload the primary claim document"
+          description={`Upload the primary claim document${isEditing ? ' (leave empty to keep existing file)' : ''}`}
           contextFiles={claimFile ? [claimFile] : []}
           setContextFiles={handleClaimFileChange}
         />
         {claimFileError && <p className="text-sm text-red-500 mt-2 mb-4">{claimFileError}</p>}
-        {selectedProjectId && selectedContractorId && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <h3 className="font-medium mb-4">Include Related Contexts</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="projectContext" className="text-base font-normal">
-                      {`Include Project Context (${getProjectById(selectedProjectId)?.title || ""})`}
-                    </Label>
-                    <p className="text-sm text-gray-500">
-                      {getProjectById(selectedProjectId)?.contextFiles.length || 0} file(s) available
-                    </p>
-                  </div>
-                  <Switch
-                    id="projectContext"
-                    checked={includedProjectContext}
-                    onCheckedChange={setIncludedProjectContext}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="contractorContext" className="text-base font-normal">
-                      {`Include Contractor Context (${getContractorById(selectedContractorId)?.name || ""})`}
-                    </Label>
-                    <p className="text-sm text-gray-500">
-                      {getContractorById(selectedContractorId)?.contextFiles.length || 0} file(s) available
-                    </p>
-                  </div>
-                  <Switch
-                    id="contractorContext"
-                    checked={includedContractorContext}
-                    onCheckedChange={setIncludedContractorContext}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        
         <ContextFileUploader
           title="Additional Claim Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
         />
+        
         <div className="flex justify-between mt-6">
           <Button 
             type="button" 
             variant="outline"
             onClick={() => navigate("/claims")}
+            disabled={submitting}
           >
             Cancel
           </Button>
-          <Button type="submit" className="flex items-center">
+          <Button type="submit" className="flex items-center" disabled={submitting}>
             <Save className="mr-2 h-4 w-4" />
-            {isEditing ? "Update Claim" : "Create Claim"}
+            {submitting ? 'Saving...' : (isEditing ? "Update Claim" : "Create Claim")}
           </Button>
         </div>
       </form>

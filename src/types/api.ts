@@ -50,10 +50,18 @@ export interface ClaimRead {
   updatedAt: string;
 }
 
-export interface ClaimWithProjectContractorContext extends ClaimRead {
+export interface ClaimFileRead {
+  id: string;
+  path: string;
+  claim_id?: string;
+  created_at: string;
+}
+
+export interface ClaimWithProjectContractorContextFiles extends ClaimRead {
   project: ProjectRead;
   contractor: ContractorRead;
   contextFiles: ContextFileRead[];
+  claimFile: ClaimFileRead;
 }
 
 export interface ContextFileRead {
@@ -88,7 +96,6 @@ export interface UpdateCountryRequest {
 export interface CreateProjectRequest {
   name: string;
   country_id: string;
-  contractors_ids?: string[];
   contextFiles?: File[];
 }
 
@@ -115,6 +122,7 @@ export interface CreateClaimRequest {
   name: string;
   contractorId: string;
   projectId: string;
+  claimFile: File;
   contextFiles?: File[];
 }
 
@@ -122,5 +130,6 @@ export interface UpdateClaimRequest {
   name?: string;
   contractorId?: string;
   projectId?: string;
+  claimFile?: File;
   contextFiles?: File[];
 }
