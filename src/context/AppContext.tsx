@@ -238,6 +238,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         name: claim.title,
         contractorId: claim.contractorId,
         projectId: claim.projectId,
+        claimFile: claim.claimFile!, // This is required for claims
         contextFiles: claim.contextFiles,
       });
       
@@ -259,6 +260,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         name: claim.title,
         contractorId: claim.contractorId,
         projectId: claim.projectId,
+        claimFile: claim.claimFile,
         contextFiles: claim.contextFiles,
       });
       

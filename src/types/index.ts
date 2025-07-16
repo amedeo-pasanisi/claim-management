@@ -1,90 +1,86 @@
+import {
+  CountryRead,
+  ProjectRead,
+  ContractorRead,
+  ClaimRead,
+  CountryWithProjectsContext,
+  ProjectWithCountryContractorsClaimsContext,
+  ContractorWithProjectsClaimsContext,
+  ClaimWithProjectContractorContextFiles,
+} from "@/types/api";
 
-export type Project = {
-  id: string;
-  title: string; // Keep frontend field name but map to API 'name'
-  countryId: string;
-  createdAt: string;
-  contextFiles: File[];
-};
-
-export type Contractor = {
+export interface Country {
   id: string;
   name: string;
+  flag: string | null;
+  contextFiles: File[];
   createdAt: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  countryId: string;
+  contextFiles: File[];
+  createdAt: string;
+}
+
+export interface Contractor {
+  id: string;
+  name: string;
   projectIds: string[];
   contextFiles: File[];
-};
-
-export type Claim = {
-  id: string;
-  title: string; // Keep frontend field name but map to API 'name'
   createdAt: string;
+}
+
+export interface Claim {
+  id: string;
+  title: string;
   contractorId: string;
   projectId: string;
-  claimFile: File;
+  claimFile?: File;
   contextFiles: File[];
-  includedProjectContext: boolean;
-  includedContractorContext: boolean;
-};
-
-export type Country = {
-  id: string;
-  name: string;
-  code: string; // Keep for frontend compatibility
-  flag: string; // Keep for frontend compatibility, maps to flagUrl
   createdAt: string;
-  contextFiles: File[];
-};
+}
 
-export type Context = {
-  id: string;
-  type: "project" | "contractor" | "claim" | "country";
-  parentId: string;
-  files: File[];
-};
-
-// Helper function to convert API types to frontend types
-export function mapApiCountryToFrontend(apiCountry: any): Country {
+export const mapApiCountryToFrontend = (apiCountry: CountryRead | CountryWithProjectsContext): Country => {
   return {
     id: apiCountry.id,
     name: apiCountry.name,
-    code: apiCountry.name.substring(0, 2).toUpperCase(), // Generate code from name
-    flag: apiCountry.flagUrl || '',
+    flag: apiCountry.flagUrl || null,
+    contextFiles: [], // File objects can't be retrieved from API
     createdAt: apiCountry.createdAt,
-    contextFiles: [], // Will be populated separately
   };
-}
+};
 
-export function mapApiProjectToFrontend(apiProject: any): Project {
+export const mapApiProjectToFrontend = (apiProject: ProjectRead | ProjectWithCountryContractorsClaimsContext): Project => {
   return {
     id: apiProject.id,
     title: apiProject.name,
     countryId: apiProject.countryId,
+    contextFiles: [], // File objects can't be retrieved from API
     createdAt: apiProject.createdAt,
-    contextFiles: [], // Will be populated separately
   };
-}
+};
 
-export function mapApiContractorToFrontend(apiContractor: any): Contractor {
+export const mapApiContractorToFrontend = (apiContractor: ContractorRead | ContractorWithProjectsClaimsContext): Contractor => {
   return {
     id: apiContractor.id,
     name: apiContractor.name,
+    projectIds: [], // Assuming projectIds are not directly available here
+    contextFiles: [], // File objects can't be retrieved from API
     createdAt: apiContractor.createdAt,
-    projectIds: apiContractor.projects?.map((p: any) => p.id) || [],
-    contextFiles: [], // Will be populated separately
   };
-}
+};
 
-export function mapApiClaimToFrontend(apiClaim: any): Claim {
+// Update the mapApiClaimToFrontend function
+export const mapApiClaimToFrontend = (apiClaim: ClaimRead | ClaimWithProjectContractorContextFiles): Claim => {
   return {
     id: apiClaim.id,
     title: apiClaim.name,
-    createdAt: apiClaim.createdAt,
     contractorId: apiClaim.contractorId,
     projectId: apiClaim.projectId,
-    claimFile: new File([], 'claim.pdf'), // Placeholder since API doesn't have claimFile
-    contextFiles: [], // Will be populated separately
-    includedProjectContext: false,
-    includedContractorContext: false,
+    contextFiles: [], // File objects can't be retrieved from API
+    createdAt: apiClaim.createdAt,
   };
-}
+};

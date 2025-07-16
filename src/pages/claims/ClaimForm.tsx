@@ -17,11 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { claimsApi, contractorsApi, projectsApi } from "@/lib/api";
-import { ClaimWithProjectContractorContextFiles, ContractorRead, ProjectRead } from "@/types/api";
+import { ContractorRead, ProjectRead } from "@/types/api";
 
 const ClaimForm = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { addClaim, updateClaim } = useApp();
   const isEditing = !!id;
 
   // Form state
@@ -113,17 +114,19 @@ const ClaimForm = () => {
     setSubmitting(true);
     
     try {
-      if (isEditing && id) {
-        await claimsApi.update(id, {
-          name: title,
+      if (isEditing) {
+        await updateClaim({
+          id: id!,
+          title,
           contractorId: selectedContractorId,
           projectId: selectedProjectId,
           claimFile: claimFile || undefined,
           contextFiles,
+          createdAt: new Date().toISOString(), // This will be ignored by the API
         });
       } else {
-        await claimsApi.create({
-          name: title,
+        await addClaim({
+          title,
           contractorId: selectedContractorId,
           projectId: selectedProjectId,
           claimFile: claimFile!,
@@ -274,7 +277,7 @@ const ClaimForm = () => {
         {claimFileError && <p className="text-sm text-red-500 mt-2 mb-4">{claimFileError}</p>}
         
         <ContextFileUploader
-          title="Additional Claim Context Files"
+          title="Additional Context Files"
           description="Upload any additional supporting documents for this claim (optional)"
           contextFiles={contextFiles}
           setContextFiles={setContextFiles}
