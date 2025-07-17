@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban, FileText } from "lucide-react";
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { claimsApi } from "@/lib/api";
-import { ClaimWithProjectContractorContextFiles } from "@/types/api";
+import { claimsApi, projectsApi, contractorsApi } from "@/lib/api";
+import { ClaimWithProjectContractorContextFiles, ProjectWithCountryContractorsClaimsContext, ContractorWithProjectsClaimsContext } from "@/types/api";
 
 const ClaimDetail = () => {
   const { id } = useParams();
@@ -21,7 +21,11 @@ const ClaimDetail = () => {
   const [showContractorFiles, setShowContractorFiles] = useState(false);
   const [showProjectFiles, setShowProjectFiles] = useState(false);
   const [claim, setClaim] = useState<ClaimWithProjectContractorContextFiles | null>(null);
+  const [detailedProject, setDetailedProject] = useState<ProjectWithCountryContractorsClaimsContext | null>(null);
+  const [detailedContractor, setDetailedContractor] = useState<ContractorWithProjectsClaimsContext | null>(null);
   const [loading, setLoading] = useState(true);
+  const [projectFilesLoading, setProjectFilesLoading] = useState(false);
+  const [contractorFilesLoading, setContractorFilesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,6 +50,48 @@ const ClaimDetail = () => {
 
     fetchClaim();
   }, [id, navigate]);
+
+  const fetchProjectDetails = async () => {
+    if (!claim || detailedProject) return;
+    
+    try {
+      setProjectFilesLoading(true);
+      const projectData = await projectsApi.getById(claim.project.id);
+      setDetailedProject(projectData);
+    } catch (err) {
+      console.error('Failed to fetch project details:', err);
+    } finally {
+      setProjectFilesLoading(false);
+    }
+  };
+
+  const fetchContractorDetails = async () => {
+    if (!claim || detailedContractor) return;
+    
+    try {
+      setContractorFilesLoading(true);
+      const contractorData = await contractorsApi.getById(claim.contractor.id);
+      setDetailedContractor(contractorData);
+    } catch (err) {
+      console.error('Failed to fetch contractor details:', err);
+    } finally {
+      setContractorFilesLoading(false);
+    }
+  };
+
+  const handleShowProjectFiles = () => {
+    if (!showProjectFiles && !detailedProject) {
+      fetchProjectDetails();
+    }
+    setShowProjectFiles(!showProjectFiles);
+  };
+
+  const handleShowContractorFiles = () => {
+    if (!showContractorFiles && !detailedContractor) {
+      fetchContractorDetails();
+    }
+    setShowContractorFiles(!showContractorFiles);
+  };
 
   if (!id) {
     navigate("/claims");
@@ -220,14 +266,19 @@ const ClaimDetail = () => {
                 {claim.project.name}
               </Link>
 
-              {/* Project context files */}
               <Button
                 variant="outline"
                 size="sm"
                 className="flex items-center w-full"
-                onClick={() => setShowProjectFiles(!showProjectFiles)}
+                onClick={handleShowProjectFiles}
+                disabled={projectFilesLoading}
               >
-                {showProjectFiles ? (
+                {projectFilesLoading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Loading...
+                  </>
+                ) : showProjectFiles ? (
                   <>
                     <FolderOpen className="mr-2 h-4 w-4 text-blue-600" />
                     Hide Project Files
@@ -235,17 +286,17 @@ const ClaimDetail = () => {
                 ) : (
                   <>
                     <FolderClosed className="mr-2 h-4 w-4 text-blue-600" />
-                    Show Project Files ({claim.project.contextFiles?.length || 0})
+                    Show Project Files
                   </>
                 )}
               </Button>
 
               {showProjectFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {!claim.project.contextFiles || claim.project.contextFiles.length === 0 ? (
+                  {!detailedProject?.contextFiles || detailedProject.contextFiles.length === 0 ? (
                     <p className="text-gray-500 text-sm">No project context files</p>
                   ) : (
-                    claim.project.contextFiles.map((file) => {
+                    detailedProject.contextFiles.map((file) => {
                       const fileName = file.path.split('/').pop() || file.path;
                       return (
                         <div key={file.id} className="flex items-center p-1 text-sm">
@@ -276,14 +327,19 @@ const ClaimDetail = () => {
                 {claim.contractor.name}
               </Link>
 
-              {/* Contractor context files */}
               <Button
                 variant="outline"
                 size="sm"
                 className="flex items-center w-full"
-                onClick={() => setShowContractorFiles(!showContractorFiles)}
+                onClick={handleShowContractorFiles}
+                disabled={contractorFilesLoading}
               >
-                {showContractorFiles ? (
+                {contractorFilesLoading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="mr-2" />
+                    Loading...
+                  </>
+                ) : showContractorFiles ? (
                   <>
                     <FolderOpen className="mr-2 h-4 w-4 text-green-600" />
                     Hide Contractor Files
@@ -291,17 +347,17 @@ const ClaimDetail = () => {
                 ) : (
                   <>
                     <FolderClosed className="mr-2 h-4 w-4 text-green-600" />
-                    Show Contractor Files ({claim.contractor.contextFiles?.length || 0})
+                    Show Contractor Files
                   </>
                 )}
               </Button>
 
               {showContractorFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {!claim.contractor.contextFiles || claim.contractor.contextFiles.length === 0 ? (
+                  {!detailedContractor?.contextFiles || detailedContractor.contextFiles.length === 0 ? (
                     <p className="text-gray-500 text-sm">No contractor context files</p>
                   ) : (
-                    claim.contractor.contextFiles.map((file) => {
+                    detailedContractor.contextFiles.map((file) => {
                       const fileName = file.path.split('/').pop() || file.path;
                       return (
                         <div key={file.id} className="flex items-center p-1 text-sm">
