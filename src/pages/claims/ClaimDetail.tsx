@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -77,6 +76,10 @@ const ClaimDetail = () => {
     } finally {
       setContractorFilesLoading(false);
     }
+  };
+
+  const handleFileClick = (filePath: string) => {
+    window.open(filePath, '_blank');
   };
 
   const handleShowProjectFiles = () => {
@@ -192,7 +195,10 @@ const ClaimDetail = () => {
               <div>
                 <h3 className="font-medium mb-1">Main Claim File</h3>
                 <div className="border rounded-md p-4">
-                  <div className="flex items-center p-2 border rounded bg-gray-50">
+                  <div 
+                    className="flex items-center p-2 border rounded bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleFileClick(claim.claimFile.path)}
+                  >
                     <FileText className="h-4 w-4 text-blue-600 mr-2" />
                     <span className="text-sm">
                       {claim.claimFile.path.split('/').pop() || claim.claimFile.path}
@@ -234,7 +240,8 @@ const ClaimDetail = () => {
                         return (
                           <div
                             key={file.id}
-                            className="flex items-center p-2 border rounded bg-gray-50"
+                            className="flex items-center p-2 border rounded bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                            onClick={() => handleFileClick(file.path)}
                           >
                             <File className="h-4 w-4 text-amber-600 mr-2" />
                             <span className="text-sm">{fileName}</span>
@@ -299,7 +306,11 @@ const ClaimDetail = () => {
                     detailedProject.contextFiles.map((file) => {
                       const fileName = file.path.split('/').pop() || file.path;
                       return (
-                        <div key={file.id} className="flex items-center p-1 text-sm">
+                        <div 
+                          key={file.id} 
+                          className="flex items-center p-1 text-sm cursor-pointer hover:bg-gray-100 rounded transition-colors"
+                          onClick={() => handleFileClick(file.path)}
+                        >
                           <File className="h-3 w-3 text-blue-600 mr-1" />
                           <span className="truncate">{fileName}</span>
                         </div>
@@ -360,7 +371,11 @@ const ClaimDetail = () => {
                     detailedContractor.contextFiles.map((file) => {
                       const fileName = file.path.split('/').pop() || file.path;
                       return (
-                        <div key={file.id} className="flex items-center p-1 text-sm">
+                        <div 
+                          key={file.id} 
+                          className="flex items-center p-1 text-sm cursor-pointer hover:bg-gray-100 rounded transition-colors"
+                          onClick={() => handleFileClick(file.path)}
+                        >
                           <File className="h-3 w-3 text-green-600 mr-1" />
                           <span className="truncate">{fileName}</span>
                         </div>
