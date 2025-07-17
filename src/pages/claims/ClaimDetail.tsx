@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -142,24 +143,6 @@ const ClaimDetail = () => {
                 </Link>
               </div>
 
-              {claim.summary && (
-                <div>
-                  <h3 className="font-medium mb-1">Summary</h3>
-                  <div className="border rounded-md p-4 bg-gray-50">
-                    <p className="text-sm whitespace-pre-wrap">{claim.summary}</p>
-                  </div>
-                </div>
-              )}
-
-              {claim.text && (
-                <div>
-                  <h3 className="font-medium mb-1">Text</h3>
-                  <div className="border rounded-md p-4 bg-gray-50 max-h-64 overflow-y-auto">
-                    <p className="text-sm whitespace-pre-wrap">{claim.text}</p>
-                  </div>
-                </div>
-              )}
-
               <div>
                 <h3 className="font-medium mb-1">Main Claim File</h3>
                 <div className="border rounded-md p-4">
@@ -252,17 +235,17 @@ const ClaimDetail = () => {
                 ) : (
                   <>
                     <FolderClosed className="mr-2 h-4 w-4 text-blue-600" />
-                    Show Project Files
+                    Show Project Files ({claim.project.contextFiles?.length || 0})
                   </>
                 )}
               </Button>
 
               {showProjectFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {claim.project.contextFiles?.length === 0 ? (
+                  {!claim.project.contextFiles || claim.project.contextFiles.length === 0 ? (
                     <p className="text-gray-500 text-sm">No project context files</p>
                   ) : (
-                    claim.project.contextFiles?.map((file) => {
+                    claim.project.contextFiles.map((file) => {
                       const fileName = file.path.split('/').pop() || file.path;
                       return (
                         <div key={file.id} className="flex items-center p-1 text-sm">
@@ -308,35 +291,65 @@ const ClaimDetail = () => {
                 ) : (
                   <>
                     <FolderClosed className="mr-2 h-4 w-4 text-green-600" />
-                    Show Contractor Files
+                    Show Contractor Files ({claim.contractor.contextFiles?.length || 0})
                   </>
                 )}
               </Button>
 
               {showContractorFiles && (
                 <div className="mt-2 border rounded-md p-2 space-y-1 max-h-40 overflow-y-auto">
-                  {
-                    claim.contractor.contextFiles?.length === 0 ? (
-                      <p className="text-gray-500 text-sm">No contractor context files</p>
-                    ) :
-                    (
-                      claim.contractor.contextFiles?.map((file) => {
-                        const fileName = file.path.split('/').pop() || file.path;
-                        return (
-                          <div key={file.id} className="flex items-center p-1 text-sm">
-                            <File className="h-3 w-3 text-green-600 mr-1" />
-                            <span className="truncate">{fileName}</span>
-                          </div>
-                        );
-                      })
-                    )
-                  }
+                  {!claim.contractor.contextFiles || claim.contractor.contextFiles.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No contractor context files</p>
+                  ) : (
+                    claim.contractor.contextFiles.map((file) => {
+                      const fileName = file.path.split('/').pop() || file.path;
+                      return (
+                        <div key={file.id} className="flex items-center p-1 text-sm">
+                          <File className="h-3 w-3 text-green-600 mr-1" />
+                          <span className="truncate">{fileName}</span>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Extracted Text and Summary Section */}
+      {(claim.text || claim.summary) && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-purple-600" />
+              <CardTitle>Extracted Text</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {claim.text && (
+                <div>
+                  <h3 className="font-medium mb-1">Text</h3>
+                  <div className="border rounded-md p-4 bg-gray-50 max-h-64 overflow-y-auto">
+                    <p className="text-sm whitespace-pre-wrap">{claim.text}</p>
+                  </div>
+                </div>
+              )}
+
+              {claim.summary && (
+                <div>
+                  <h3 className="font-medium mb-1">Summary</h3>
+                  <div className="border rounded-md p-4 bg-gray-50">
+                    <p className="text-sm whitespace-pre-wrap">{claim.summary}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <ConfirmDeleteDialog
         isOpen={isDeleteDialogOpen}
