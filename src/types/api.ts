@@ -45,6 +45,8 @@ export interface ClaimRead {
   name: string;
   contractorId: string;
   projectId: string;
+  text?: string;
+  summary?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -123,6 +125,8 @@ export interface CreateClaimRequest {
   projectId: string;
   claimFile: File;
   contextFiles?: File[];
+  text?: string;
+  summary?: string;
 }
 
 export interface UpdateClaimRequest {
@@ -131,4 +135,6 @@ export interface UpdateClaimRequest {
   projectId?: string;
   claimFile?: File;
   contextFiles?: File[];
+  text?: string;
+  summary?: string;
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
@@ -142,6 +141,24 @@ const ClaimDetail = () => {
                   {claim.contractor.name}
                 </Link>
               </div>
+
+              {claim.summary && (
+                <div>
+                  <h3 className="font-medium mb-1">Summary</h3>
+                  <div className="border rounded-md p-4 bg-gray-50">
+                    <p className="text-sm whitespace-pre-wrap">{claim.summary}</p>
+                  </div>
+                </div>
+              )}
+
+              {claim.text && (
+                <div>
+                  <h3 className="font-medium mb-1">Text</h3>
+                  <div className="border rounded-md p-4 bg-gray-50 max-h-64 overflow-y-auto">
+                    <p className="text-sm whitespace-pre-wrap">{claim.text}</p>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <h3 className="font-medium mb-1">Main Claim File</h3>
