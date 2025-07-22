@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import FlagImage from "@/components/FlagImage";
 import {
   Select,
   SelectContent,
@@ -164,7 +165,15 @@ const ProjectForm = () => {
                       <SelectContent>
                         {countries.map((country) => (
                           <SelectItem key={country.id} value={country.id}>
-                            {country.name}
+                            <div className="flex items-center gap-2">
+                              <FlagImage 
+                                src={country.flag || ''} 
+                                alt={`${country.name} flag`}
+                                className="w-5 h-5 rounded-sm object-cover"
+                                fallbackText={country.name.substring(0, 2).toUpperCase()}
+                              />
+                              {country.name}
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
