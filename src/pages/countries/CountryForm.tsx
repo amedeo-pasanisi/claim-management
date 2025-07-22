@@ -4,11 +4,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useApp } from "@/context/AppContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 import ContextFileUploader from "@/components/ContextFileUploader";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { countries as predefinedCountries } from "@/data/countries";
 
 const CountryForm = () => {
   const navigate = useNavigate();
@@ -16,20 +17,22 @@ const CountryForm = () => {
   const { countries, addCountry, updateCountry, loading } = useApp();
   const isEditing = !!id;
 
-  const [name, setName] = useState("");
-  const [flagUrl, setFlagUrl] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("");
   const [contextFiles, setContextFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   // Form validation errors
-  const [nameError, setNameError] = useState("");
+  const [countryError, setCountryError] = useState("");
 
   useEffect(() => {
     if (isEditing && id) {
       const country = countries.find((c) => c.id === id);
       if (country) {
-        setName(country.name);
-        setFlagUrl(country.flag || "");
+        // Find the matching country from the predefined list by name
+        const predefinedCountry = predefinedCountries.find((pc) => pc.name === country.name);
+        if (predefinedCountry) {
+          setSelectedCountryCode(predefinedCountry.code);
+        }
         // Note: contextFiles can't be populated from existing data
       }
     }
@@ -37,11 +40,11 @@ const CountryForm = () => {
 
   const validateForm = () => {
     let isValid = true;
-    if (!name.trim()) {
-      setNameError("Country name is required");
+    if (!selectedCountryCode) {
+      setCountryError("Please select a country");
       isValid = false;
     } else {
-      setNameError("");
+      setCountryError("");
     }
     return isValid;
   };
@@ -54,19 +57,22 @@ const CountryForm = () => {
 
     setSubmitting(true);
     
+    const selectedCountry = predefinedCountries.find(c => c.code === selectedCountryCode);
+    if (!selectedCountry) return;
+
     try {
       if (isEditing) {
         await updateCountry({
           id: id!,
-          name,
-          flag: flagUrl || null,
+          name: selectedCountry.name,
+          flag: selectedCountry.flag,
           contextFiles,
           createdAt: new Date().toISOString(), // This will be ignored by the API
         });
       } else {
         await addCountry({
-          name,
-          flag: flagUrl || null,
+          name: selectedCountry.name,
+          flag: selectedCountry.flag,
           contextFiles,
         });
       }
@@ -105,29 +111,35 @@ const CountryForm = () => {
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">
-                  Country Name <span className="text-red-500">*</span>
+                <Label htmlFor="country">
+                  Select Country <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (e.target.value.trim()) setNameError("");
+                <Select
+                  value={selectedCountryCode}
+                  onValueChange={(value) => {
+                    setSelectedCountryCode(value);
+                    if (value) setCountryError("");
                   }}
-                  placeholder="Enter country name"
-                  className={nameError ? "border-red-500" : ""}
-                />
-                {nameError && <p className="text-sm text-red-500">{nameError}</p>}
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="flagUrl">Flag URL (optional)</Label>
-                <Input
-                  id="flagUrl"
-                  value={flagUrl}
-                  onChange={(e) => setFlagUrl(e.target.value)}
-                  placeholder="Enter flag image URL"
-                />
+                >
+                  <SelectTrigger className={countryError ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {predefinedCountries.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        <div className="flex items-center gap-2">
+                          <img 
+                            src={country.flag} 
+                            alt={`${country.name} flag`} 
+                            className="w-5 h-4 object-cover rounded-sm"
+                          />
+                          <span>{country.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {countryError && <p className="text-sm text-red-500">{countryError}</p>}
               </div>
             </div>
           </CardContent>
