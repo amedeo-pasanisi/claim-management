@@ -4,7 +4,9 @@ import { useApp } from "@/context/AppContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban, FileText } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban, FileText, Copy, Download } from "lucide-react";
+import jsPDF from 'jspdf';
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { claimsApi, projectsApi, contractorsApi } from "@/lib/api";
@@ -26,6 +28,9 @@ const ClaimDetail = () => {
   const [projectFilesLoading, setProjectFilesLoading] = useState(false);
   const [contractorFilesLoading, setContractorFilesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportText, setReportText] = useState('');
 
   useEffect(() => {
     const fetchClaim = async () => {
@@ -116,6 +121,74 @@ const ClaimDetail = () => {
   const handleDelete = () => {
     deleteClaim(id);
     navigate("/claims");
+  };
+
+  const handleGenerateReport = () => {
+    setIsGeneratingReport(true);
+    setShowReportGenerator(true);
+    
+    setTimeout(() => {
+      const sampleText = `**Subject:** Claim due to Stoppage RTR Installation Activity after Railway  
+**References:** PTJ-SGCP-SAS-L-0639/2021  
+**To:** Subcontractor  
+**From:** Contractor  
+Dear Sirs,  
+The Contractor has reviewed the claim submitted by the Subcontractor, referenced as PTJ-SGCP-SAS-L-0639/2021, regarding compensation for standby time due to the stoppage of RTR installation activities. After thorough analysis, the Contractor has determined that the claim is **non-eligible** based on the following contractual considerations:  
+1. **Failure to Provide Timely Notification of Standby Time**  
+   As per the terms of the Purchase Order (_PO 1248435 Rev.01_), the Subcontractor is required to immediately notify the Contractor's Representative orally when standby time is anticipated and confirm such notification in writing as soon as practicable. The claim does not provide evidence of any timely oral or written notification regarding the anticipated standby time. In the absence of such notification, the Contractor reserves the right to reject the claim for compensation.  
+2. **Lack of Substantiated Daily Time Sheets**  
+   The Purchase Order (_PO 1248435 Rev.00_) explicitly requires that all requests for standby compensation be substantiated by daily time sheets prepared by the Subcontractor, stating the reasons for the standby and submitted to the Contractor's Representative for confirmation no later than the following scheduled working day. The claim does not include any evidence of such daily time sheets signed or confirmed by the Contractor's Representative, rendering the claim invalid.  
+3. **Standby Time Not Verified or Approved**  
+   According to the Purchase Order (_PO 1248435 Rev.00_), verified standby time will only be compensated if it occurs on a scheduled workday and is approved by the Contractor. The claim does not provide evidence that the standby time was verified or approved by the Contractor, which is a prerequisite for eligibility.  
+4. **No Evidence of Inability to Reschedule Resources**  
+   The Purchase Order (_PO 1248435 Rev.01_) requires the Subcontractor to justify why affected manpower and equipment could not be rescheduled for use elsewhere during the standby period. The claim does not include any explanation or evidence demonstrating that the Subcontractor was unable to reallocate resources, which is necessary to support a claim for standby compensation.  
+5. **Exclusion of Standby Time for Non-Force Majeure Events**  
+   The Purchase Order (_PO 1248435 Rev.01_) explicitly excludes liability for standby time caused by the Subcontractor's inability to supply materials, equipment, or personnel, or due to equipment malfunction, inclement weather, or other non-Force Majeure events. The claim does not reference any Force Majeure event or exceptional circumstance that would justify the stoppage, and therefore, the Contractor is not liable for the claimed standby costs.  
+6. **No Evidence of Contractual Breach by Contractor**  
+   The claim asserts that the Contractor stopped the activity "without any contractual reasons." However, no evidence is provided to substantiate this assertion. The Contractor retains the right to manage and adjust project schedules as per the terms of the Work Contract (_PO 1248435 Rev.01_), and no breach of contract has been demonstrated in the claim.  
+7. **Requirement for Revision of Work Contract Amount**  
+   As per the Work Contract (_4. SAS-SGCP-PTJ-L-00222-20_), any claims related to modifications or changes in work must be included in the Total Work Contract Amount through a formal revision process. The claim does not provide evidence that the claimed standby costs were included in a revised Work Contract Amount, which is a necessary condition for processing or approval.  
+**Conclusion:**  
+Based on the above points, the claim is deemed **non-eligible** due to the Subcontractor's failure to comply with the contractual requirements for notification, substantiation, verification, and justification of standby time.  
+Sincerely,  
+Contractor`;
+      
+      setReportText(sampleText);
+      setIsGeneratingReport(false);
+    }, 5000);
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(reportText);
+      // Could add toast notification here if needed
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  const handleSaveToPDF = () => {
+    const doc = new jsPDF();
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20;
+    const lineHeight = 6;
+    const maxWidth = 170;
+    
+    // Split text into lines
+    const lines = doc.splitTextToSize(reportText, maxWidth);
+    
+    let y = margin;
+    
+    lines.forEach((line: string) => {
+      if (y + lineHeight > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(line, margin, y);
+      y += lineHeight;
+    });
+    
+    doc.save(`claim-report-${claim.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
   };
 
   return (
@@ -421,6 +494,61 @@ const ClaimDetail = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Report Generator Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center space-y-4">
+            <Button
+              onClick={handleGenerateReport}
+              size="lg"
+              className="w-full max-w-md h-12 text-lg"
+              disabled={isGeneratingReport}
+            >
+              {isGeneratingReport ? (
+                <>
+                  <LoadingSpinner size="sm" className="mr-2" />
+                  Generating Report...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-5 w-5" />
+                  Generate Claim Report
+                </>
+              )}
+            </Button>
+
+            {showReportGenerator && !isGeneratingReport && (
+              <div className="w-full space-y-4">
+                <Textarea
+                  value={reportText}
+                  readOnly
+                  className="min-h-[400px] font-mono text-sm"
+                  placeholder="Generated report will appear here..."
+                />
+                <div className="flex justify-center space-x-4">
+                  <Button
+                    onClick={handleCopyToClipboard}
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy to Clipboard
+                  </Button>
+                  <Button
+                    onClick={handleSaveToPDF}
+                    variant="outline"
+                    className="flex items-center"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Save as PDF
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <ConfirmDeleteDialog
         isOpen={isDeleteDialogOpen}
