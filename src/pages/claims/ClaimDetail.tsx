@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Edit, Trash, File, FolderClosed, FolderOpen, Users, FolderKanban, FileText, Copy, Download } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
 import jsPDF from 'jspdf';
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -513,19 +514,16 @@ Contractor`;
               ) : (
                 <>
                   <FileText className="mr-2 h-5 w-5" />
-                  Generate Claim Report
+                  Generate Claim Out
                 </>
               )}
             </Button>
 
             {showReportGenerator && !isGeneratingReport && (
               <div className="w-full space-y-4">
-                <Textarea
-                  value={reportText}
-                  readOnly
-                  className="min-h-[400px] font-mono text-sm"
-                  placeholder="Generated report will appear here..."
-                />
+                <div className="border rounded-md p-6 bg-background min-h-[400px] prose prose-sm max-w-none">
+                  <ReactMarkdown>{reportText}</ReactMarkdown>
+                </div>
                 <div className="flex justify-center space-x-4">
                   <Button
                     onClick={handleCopyToClipboard}

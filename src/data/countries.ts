@@ -25,5 +25,6 @@ export const countries: CountryData[] = [
   { name: "South Korea", code: "KR", flag: "https://flagcdn.com/w40/kr.png" },
   { name: "Singapore", code: "SG", flag: "https://flagcdn.com/w40/sg.png" },
   { name: "Switzerland", code: "CH", flag: "https://flagcdn.com/w40/ch.png" },
-  { name: "Austria", code: "AT", flag: "https://flagcdn.com/w40/at.png" }
+  { name: "Austria", code: "AT", flag: "https://flagcdn.com/w40/at.png" },
+  { name: "Saudi Arabia", code: "SA", flag: "https://flagcdn.com/w40/sa.png" }
 ];
