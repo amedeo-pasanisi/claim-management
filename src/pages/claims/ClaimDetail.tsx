@@ -10,6 +10,7 @@ import ReactMarkdown from 'react-markdown';
 import jsPDF from 'jspdf';
 import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useToast } from "@/hooks/use-toast";
 import { claimsApi, projectsApi, contractorsApi } from "@/lib/api";
 import { ClaimWithProjectContractorContextFiles, ProjectWithCountryContractorsClaimsContext, ContractorWithProjectsClaimsContext } from "@/types/api";
 
@@ -17,6 +18,7 @@ const ClaimDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { deleteClaim } = useApp();
+  const { toast } = useToast();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showClaimFiles, setShowClaimFiles] = useState(false);
@@ -162,9 +164,17 @@ Contractor`;
   const handleCopyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(reportText);
-      // Could add toast notification here if needed
+      toast({
+        title: "Success",
+        description: "Text copied to clipboard",
+      });
     } catch (err) {
       console.error('Failed to copy text: ', err);
+      toast({
+        title: "Error",
+        description: "Failed to copy text to clipboard",
+        variant: "destructive",
+      });
     }
   };
 
@@ -189,7 +199,7 @@ Contractor`;
       y += lineHeight;
     });
     
-    doc.save(`claim-report-${claim.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
+    doc.save(`claim_out_${claim.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`);
   };
 
   return (
