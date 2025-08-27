@@ -274,6 +274,10 @@ export const claimsApi = {
   async delete(id: string): Promise<void> {
     return httpClient.delete<void>(`/api/v1/claims/${id}`);
   },
+
+  async generate(id: string): Promise<ClaimWithProjectContractorContextFiles> {
+    return httpClient.patch<ClaimWithProjectContractorContextFiles>(`/api/v1/claims/${id}/generate`);
+  },
 };
 
 export { ApiError };

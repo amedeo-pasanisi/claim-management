@@ -126,39 +126,30 @@ const ClaimDetail = () => {
     navigate("/claims");
   };
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
+    if (!claim) return;
+    
     setIsGeneratingReport(true);
     setShowReportGenerator(true);
     
-    setTimeout(() => {
-      const sampleText = `**Subject:** Claim due to Stoppage RTR Installation Activity after Railway  
-**References:** PTJ-SGCP-SAS-L-0639/2021  
-**To:** Subcontractor  
-**From:** Contractor  
-Dear Sirs,  
-The Contractor has reviewed the claim submitted by the Subcontractor, referenced as PTJ-SGCP-SAS-L-0639/2021, regarding compensation for standby time due to the stoppage of RTR installation activities. After thorough analysis, the Contractor has determined that the claim is **non-eligible** based on the following contractual considerations:  
-1. **Failure to Provide Timely Notification of Standby Time**  
-   As per the terms of the Purchase Order (_PO 1248435 Rev.01_), the Subcontractor is required to immediately notify the Contractor's Representative orally when standby time is anticipated and confirm such notification in writing as soon as practicable. The claim does not provide evidence of any timely oral or written notification regarding the anticipated standby time. In the absence of such notification, the Contractor reserves the right to reject the claim for compensation.  
-2. **Lack of Substantiated Daily Time Sheets**  
-   The Purchase Order (_PO 1248435 Rev.00_) explicitly requires that all requests for standby compensation be substantiated by daily time sheets prepared by the Subcontractor, stating the reasons for the standby and submitted to the Contractor's Representative for confirmation no later than the following scheduled working day. The claim does not include any evidence of such daily time sheets signed or confirmed by the Contractor's Representative, rendering the claim invalid.  
-3. **Standby Time Not Verified or Approved**  
-   According to the Purchase Order (_PO 1248435 Rev.00_), verified standby time will only be compensated if it occurs on a scheduled workday and is approved by the Contractor. The claim does not provide evidence that the standby time was verified or approved by the Contractor, which is a prerequisite for eligibility.  
-4. **No Evidence of Inability to Reschedule Resources**  
-   The Purchase Order (_PO 1248435 Rev.01_) requires the Subcontractor to justify why affected manpower and equipment could not be rescheduled for use elsewhere during the standby period. The claim does not include any explanation or evidence demonstrating that the Subcontractor was unable to reallocate resources, which is necessary to support a claim for standby compensation.  
-5. **Exclusion of Standby Time for Non-Force Majeure Events**  
-   The Purchase Order (_PO 1248435 Rev.01_) explicitly excludes liability for standby time caused by the Subcontractor's inability to supply materials, equipment, or personnel, or due to equipment malfunction, inclement weather, or other non-Force Majeure events. The claim does not reference any Force Majeure event or exceptional circumstance that would justify the stoppage, and therefore, the Contractor is not liable for the claimed standby costs.  
-6. **No Evidence of Contractual Breach by Contractor**  
-   The claim asserts that the Contractor stopped the activity "without any contractual reasons." However, no evidence is provided to substantiate this assertion. The Contractor retains the right to manage and adjust project schedules as per the terms of the Work Contract (_PO 1248435 Rev.01_), and no breach of contract has been demonstrated in the claim.  
-7. **Requirement for Revision of Work Contract Amount**  
-   As per the Work Contract (_4. SAS-SGCP-PTJ-L-00222-20_), any claims related to modifications or changes in work must be included in the Total Work Contract Amount through a formal revision process. The claim does not provide evidence that the claimed standby costs were included in a revised Work Contract Amount, which is a necessary condition for processing or approval.  
-**Conclusion:**  
-Based on the above points, the claim is deemed **non-eligible** due to the Subcontractor's failure to comply with the contractual requirements for notification, substantiation, verification, and justification of standby time.  
-Sincerely,  
-Contractor`;
+    try {
+      const response = await claimsApi.generate(claim.id);
       
-      setReportText(sampleText);
+      // Use the claimout from the API response, or fallback to a default message
+      const claimoutText = response.claimout || 'No claim output generated.';
+      setReportText(claimoutText);
+    } catch (error) {
+      console.error('Failed to generate claim out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate claim output",
+        variant: "destructive",
+      });
+      // Set empty text on error
+      setReportText('');
+    } finally {
       setIsGeneratingReport(false);
-    }, 5000);
+    }
   };
 
   const handleCopyToClipboard = async () => {

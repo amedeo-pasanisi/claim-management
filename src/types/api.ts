@@ -47,6 +47,7 @@ export interface ClaimRead {
   projectId: string;
   text?: string;
   summary?: string;
+  claimout?: string;
   createdAt: string;
   updatedAt: string;
 }
